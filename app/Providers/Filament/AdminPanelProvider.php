@@ -95,6 +95,8 @@ class AdminPanelProvider extends PanelProvider
                 $this->getPlugins()
             )
             ->databaseNotifications();
+
+            
     }
 
     private function getPlugins(): array
