@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('name'); // Sesuai Nama_Lengkap di PDF [cite: 60]
             $table->string('gender')->nullable(); // [cite: 61]
             $table->string('email')->unique(); // [cite: 62]
+
+            $table->timestamp('email_verified_at')->nullable();
             
             // Role sesuai Enum di PDF [cite: 63]
             $table->enum('role', [

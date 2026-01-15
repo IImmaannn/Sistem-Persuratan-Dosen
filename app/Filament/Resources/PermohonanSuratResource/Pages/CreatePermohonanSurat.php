@@ -16,4 +16,16 @@ class CreatePermohonanSurat extends CreateRecord
     {
         return $this->getResource()::getUrl('index');
     }
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'Permohonan surat berhasil dikirim!';
+    }
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        // Mengisi kolom user_id secara otomatis dengan ID user yang sedang login
+        $data['user_id'] = auth()->id();
+        
+        return $data;
+    }
 }

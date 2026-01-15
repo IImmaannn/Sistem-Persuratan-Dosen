@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('permohonan_surats', function (Blueprint $table) {
         $table->id(); // [cite: 73]
         $table->foreignId('user_id')->constrained('users'); // FK ke pemohon (Dosen) [cite: 74]
-        $table->enum('jenis_surat', ['Narasumber', 'Penelitian']); // [cite: 75]
+        $table->foreignId('jenis_surat_id')->constrained('jenis_surats'); // FK ke Jenis Surat // [cite: 75]
+        $table->foreignId('log_persetujuan_id')->nullable('log_persetujuans'); // FK ke Jenis Surat // [cite: 75]
         $table->text('keterangan_esai'); // [cite: 76]
         $table->timestamp('tgl_pengajuan')->useCurrent(); // [cite: 77]
         $table->string('status_terakhir')->default('Pending'); // [cite: 78]

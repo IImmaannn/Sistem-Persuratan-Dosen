@@ -10,10 +10,18 @@ class ListPermohonanSurats extends ListRecords
 {
     protected static string $resource = PermohonanSuratResource::class;
 
+    // 1. Mengubah Judul di bagian atas halaman
+    public function getTitle(): string 
+    {
+        return 'History Permohonan Surat';
+    }
+
+    // 2. Menampilkan tombol "New/Create" di pojok kanan atas
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Permohonan Baru'), // Opsional: mengubah label tombol
         ];
     }
 }
