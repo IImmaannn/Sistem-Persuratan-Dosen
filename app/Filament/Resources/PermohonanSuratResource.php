@@ -98,7 +98,7 @@ class PermohonanSuratResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListPermohonanSurats::route('/'),
+            'index' => Pages\SelectionPermohonan::route('/'),
             'create' => Pages\CreatePermohonanSurat::route('/create'),
             'edit' => Pages\EditPermohonanSurat::route('/{record}/edit'),
         ];
