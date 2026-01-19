@@ -142,8 +142,8 @@ class DatabaseSeeder extends Seeder
         $dekan->assignRole('Dekan');
 
         $this->call([
-        JenisSuratSeeder::class,
-    ]);
-    
+            ConfigSeeder::class,
+            // Seeder lainnya...
+        ]);
     }
 }
