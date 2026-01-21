@@ -13,6 +13,7 @@ return new class extends Migration
         Schema::create('keterangan_essais', function (Blueprint $table) {
             $table->id(); // Ini akan menjadi ID_Keterangan
             // Kolom 1-7 untuk menampung data dinamis (Jurnal, e-ISSN, dll)
+            $table->foreignId('permohonan_surat_id')->constrained('permohonan_surats')->cascadeOnDelete();
             for ($i = 1; $i <= 7; $i++) {
                 $table->text("kolom_$i")->nullable();
             }

@@ -21,10 +21,10 @@ return new class extends Migration
             $table->foreignId('config_id')->constrained('configs'); 
 
             // PERBAIKAN: Tambahkan nullable() agar tidak error saat proses simpan di Filament
-            $table->foreignId('keterangan_essai_id')
-                  ->nullable()
-                  ->constrained('keterangan_essais')
-                  ->nullOnDelete(); 
+            // $table->foreignId('keterangan_essai_id')
+            //       ->nullable()
+            //       ->constrained('keterangan_essais')
+            //       ->nullOnDelete(); 
 
             // PERBAIKAN SINTAKS: log_persetujuan_id harus nullable dan diarahkan ke tabel yang benar
             $table->foreignId('log_persetujuan_id')

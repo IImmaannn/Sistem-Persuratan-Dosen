@@ -13,7 +13,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\Hidden;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -33,7 +32,7 @@ class PermohonanSuratResource extends Resource
 
         return $form
             ->schema([
-                // 1. DATA DOSEN (Informasi Statis)
+                // 1. DATA DOSEN (Tetap Sama)
                 Section::make('Data Dosen')
                     ->description('Informasi otomatis dari profil Anda')
                     ->schema([
@@ -49,140 +48,62 @@ class PermohonanSuratResource extends Resource
                     ])
                     ->columns(2),
 
-                // 2. DETAIL PERMOHONAN PENELITIAN (Hanya muncul jika klik tombol Hijau)
-                Section::make('Detail Permohonan Penelitian')
-                    ->visible($type === 'penelitian')
-                    ->schema([
-                        // Tanggal di baris tersendiri sesuai wireframe
-                        DatePicker::make('created_at')
-                            ->label('Tanggal')
-                            ->default(now())
-                            ->displayFormat('d/m/Y')
-                            ->columnSpanFull(),
-
-                        // Dropdown Jurnal Penelitian (Milik tabel PermohonanSurat)
-                        Select::make('config_id')
-                            ->label('Jurnal Penelitian')
-                            ->relationship('config', 'value', fn ($query) => 
-                                $query->where('kategori', 'jenis_penelitian')
-                            )
-                            ->required()
-                            ->columnSpanFull(),
-
-                        // SCOPE RELASI: Menghubungkan kolom_1 s/d kolom_4 ke tabel keterangan_essais
-                        Group::make()
-                            ->relationship('keteranganEssai') 
+                // 2. DETAIL PERMOHONAN (Logika Tanpa Tabrakan)
+                // match memastikan hanya SATU relationship yang aktif per request
+                ...match ($type) {
+                    'penelitian' => [
+                        Section::make('Detail Permohonan Penelitian')
                             ->schema([
-                                TextInput::make('kolom_1')
-                                    ->label('Nama Jurnal')
-                                    ->placeholder('Masukkan Nama Jurnal')
+                                // config_id di luar Group relasi agar masuk ke tabel permohonan_surats
+                                Select::make('config_id')
+                                    ->label('Jurnal Penelitian')
+                                    ->relationship('config', 'value', fn ($query) => 
+                                        $query->where('kategori', 'jenis_penelitian')
+                                    )
                                     ->required()
                                     ->columnSpanFull(),
 
-                                TextInput::make('kolom_2')
-                                    ->label('e-ISSN')
-                                    ->placeholder('Contoh: 1234-5678')
-                                    ->required()
-                                    ->columnSpanFull(),
+                                // Relasi detail ke keterangan_essais
+                                Group::make()
+                                    ->relationship('keteranganEssai') 
+                                    ->schema([
+                                        TextInput::make('kolom_1')->label('Nama Jurnal')->required()->columnSpanFull(),
+                                        TextInput::make('kolom_2')->label('e-ISSN')->required()->columnSpanFull(),
+                                        TextInput::make('kolom_3')->label('Judul Penelitian')->required()->columnSpanFull(),
+                                        TextInput::make('kolom_4')->label('Link Jurnal')->url()->required()->columnSpanFull(),
+                                    ])->columnSpanFull(),
+                            ])->columns(1),
+                    ],
 
-                                TextInput::make('kolom_3')
-                                    ->label('Judul Penelitian')
-                                    ->placeholder('Masukkan Judul Lengkap Penelitian')
-                                    ->required()
-                                    ->columnSpanFull(),
-
-                                TextInput::make('kolom_4')
-                                    ->label('Link Jurnal')
-                                    ->placeholder('https://...')
-                                    ->url()
-                                    ->required()
-                                    ->columnSpanFull(),
-                            ])->columnSpanFull(),
-                    ])->columns(1),
-
-                // 3. SEKSI BARU: DETAIL PERMOHONAN PENUNJANG
-                Section::make('Detail Permohonan Penunjang')
-                    ->visible($type === 'penunjang') // Muncul jika klik tombol Merah
-                    ->schema([
-                        // Tampilan Tanggal
-                        DatePicker::make('created_at')
-                            ->label('Tanggal')
-                            ->default(now())
-                            ->displayFormat('d/m/Y')
-                            ->columnSpanFull(),
-
-                        // Otomatis set config_id ke 'Surat Penunjang' agar tidak perlu pilih lagi
-                        Forms\Components\Hidden::make('config_id')
-                            ->default(fn () => \App\Models\Config::where('key', 'penunjang')->first()?->id),
-
-                        // Relasi ke tabel detail untuk kolom_5 dan kolom_6
-                        Group::make()
-                            ->relationship('keteranganEssai')
+                    'penunjang' => [
+                        Section::make('Detail Permohonan Penunjang')
                             ->schema([
-                                TextInput::make('kolom_5')
-                                    ->label('Nama Kegiatan')
-                                    ->placeholder('Masukkan Nama Kegiatan Penunjang')
-                                    ->required()
-                                    ->columnSpanFull(),
+                                Group::make()
+                                    ->relationship('keteranganEssai')
+                                    ->schema([
+                                        TextInput::make('kolom_5')->label('Nama Kegiatan')->required()->columnSpanFull(),
+                                        DatePicker::make('kolom_6')->label('Tanggal Kegiatan')->required()->columnSpanFull(),
+                                    ])->columnSpanFull(),
+                            ])->columns(1),
+                    ],
 
-                                DatePicker::make('kolom_6')
-                                    ->label('Tanggal Kegiatan')
-                                    ->placeholder('Pilih Tanggal Pelaksanaan')
-                                    ->required()
-                                    ->columnSpanFull(),
-                            ])->columnSpanFull(),
-                    ])->columns(1),
-
-                
-                Forms\Components\Section::make('Detail Permohonan Narasumber')
-                    ->visible($type === 'narasumber') // Muncul jika klik tombol Biru
-                    ->schema([
-                        // Tampilan Tanggal Pengajuan
-                        Forms\Components\DatePicker::make('created_at')
-                            ->label('Tanggal')
-                            ->default(now())
-                            ->displayFormat('d/m/Y')
-                            ->columnSpanFull(),
-
-                        // Otomatis set config_id ke 'Surat Narasumber'
-                        Forms\Components\Hidden::make('config_id')
-                            ->default(fn () => \App\Models\Config::where('key', 'narasumber')->first()?->id),
-
-                        // Relasi ke tabel detail untuk kolom spesifik
-                        Forms\Components\Group::make()
-                            ->relationship('keteranganEssai')
+                    'narasumber' => [
+                        Section::make('Detail Permohonan Narasumber')
                             ->schema([
-                                Forms\Components\TextInput::make('kolom_1')
-                                    ->label('Nama Kegiatan')
-                                    ->placeholder('Masukkan Nama Kegiatan')
-                                    ->required()
-                                    ->columnSpanFull(),
+                                Group::make()
+                                    ->relationship('keteranganEssai')
+                                    ->schema([
+                                        TextInput::make('kolom_1')->label('Nama Kegiatan')->required()->columnSpanFull(),
+                                        TextInput::make('kolom_2')->label('Penyelenggara')->required()->columnSpanFull(),
+                                        TextInput::make('kolom_3')->label('Tempat Kegiatan')->required()->columnSpanFull(),
+                                        DatePicker::make('kolom_4')->label('Tanggal Kegiatan')->required()->columnSpanFull(),
+                                        Textarea::make('kolom_5')->label('Keterangan')->rows(3)->columnSpanFull(),
+                                    ])->columnSpanFull(),
+                            ])->columns(1),
+                    ],
 
-                                Forms\Components\TextInput::make('kolom_2')
-                                    ->label('Penyelenggara')
-                                    ->placeholder('Masukkan Nama Instansi/Penyelenggara')
-                                    ->required()
-                                    ->columnSpanFull(),
-
-                                Forms\Components\TextInput::make('kolom_3')
-                                    ->label('Tempat Kegiatan')
-                                    ->placeholder('Masukkan Lokasi Kegiatan')
-                                    ->required()
-                                    ->columnSpanFull(),
-
-                                Forms\Components\DatePicker::make('kolom_4')
-                                    ->label('Tanggal Kegiatan')
-                                    ->placeholder('Pilih Tanggal Pelaksanaan')
-                                    ->required()
-                                    ->columnSpanFull(),
-
-                                Forms\Components\Textarea::make('kolom_5')
-                                    ->label('Keterangan')
-                                    ->placeholder('Tambahkan keterangan jika ada')
-                                    ->rows(3)
-                                    ->columnSpanFull(),
-                            ])->columnSpanFull(),
-                    ])->columns(1),
+                    default => [],
+                },
             ]);
     }
 
@@ -190,19 +111,11 @@ class PermohonanSuratResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('created_at')
-                    ->label('Tanggal')
-                    ->date()
-                    ->sortable(),
-
-                // Perbaikan: Memanggil relasi 'config' yang baru
+                // Perihal mengambil dari relasi config
                 TextColumn::make('config.value')
                     ->label('Perihal'),
 
-                TextColumn::make('keterangan_esai')
-                    ->label('Keterangan')
-                    ->limit(50),
-
+                // Menampilkan status dengan badge
                 TextColumn::make('status_terakhir')
                     ->label('Status')
                     ->badge()
@@ -214,9 +127,7 @@ class PermohonanSuratResource extends Resource
                         default => 'secondary',
                     }),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
@@ -227,10 +138,7 @@ class PermohonanSuratResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [];
-    }
+    public static function getRelations(): array { return []; }
 
     public static function getPages(): array
     {

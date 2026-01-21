@@ -21,11 +21,34 @@ class CreatePermohonanSurat extends CreateRecord
     {
         return 'Permohonan surat berhasil dikirim!';
     }
-    protected function mutateFormDataBeforeCreate(array $data): array
+
+   protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Mengisi kolom user_id secara otomatis dengan ID user yang sedang login
-        $data['user_id'] = auth()->id();
+        // 1. Ambil data kolom 1-7 yang ada di dalam array relasi
+        // Filament biasanya membungkus data ini sesuai nama relasi di Resource
+        $detailData = $data['keteranganEssai'] ?? null;
+
+        if ($detailData) {
+            // 2. KITA BIKIN MANUAL record di tabel keterangan_essais SEKARANG JUGA
+            $detail = \App\Models\KeteranganEssai::create($detailData);
+            
+            // 3. Masukkan ID yang baru saja dibuat ke kolom FK di tabel utama
+            // Ini kuncinya agar di Navicat tidak NULL lagi
+            $data['keterangan_essai_id'] = $detail->id;
+            
+            // Hapus array detail dari $data agar tidak diproses ulang oleh Filament
+            // unset($data['keteranganEssai']);
+        }
+
+        // 4. Logika config_id dan user_id yang sudah ada
+        $type = request()->query('type') ?? 'penelitian';
+        $config = \App\Models\Config::where('key', $type)->first();
+        if ($config) {
+            $data['config_id'] = $config->id;
+        }
         
+        $data['user_id'] = auth()->id();
+
         return $data;
     }
 }
