@@ -17,8 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class VerifikasiPermohonanResource extends Resource
 {
     protected static ?string $model = PermohonanSurat::class;
-
-    protected static ?string $navigationIcon = 'Verifikasi Permohonan';
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
    public static function form(Form $form): Form
     {
@@ -81,10 +80,12 @@ class VerifikasiPermohonanResource extends Resource
                     ->dateTime('d/m/Y')
                     ->sortable(),
 
+
                 // 2. NAMA (Dari Relasi User) [cite: 263]
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Nama')
                     ->searchable(),
+                    // ->preload(false),
 
                 // 3. NIP (Dari Relasi Profile Dosen melalui User) [cite: 264]
                 Tables\Columns\TextColumn::make('user.profile.nip')
