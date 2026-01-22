@@ -56,6 +56,16 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('')
+            ->homeUrl(fn () => match (auth()->user()?->role) {
+                'Operator_Surat' => \App\Filament\Resources\VerifikasiPermohonanResource::getUrl(),
+                'Dosen' => '/', // Atau halaman spesifik dosen
+                default => '/',
+            })
+             ->pages([
+                // Titik tiga (...) itu namanya spread operator, gunanya buat nambahin 
+                // Dashboard ke dalam list HANYA JIKA role-nya BUKAN Operator_Surat [cite: 1, 3]
+                ...(auth()->user()?->role !== 'Operator_Surat' ? [Pages\Dashboard::class] : []),
+            ])
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
             ->when($this->settings->password_reset_enabled ?? true, fn($panel) => $panel->passwordReset())
@@ -65,9 +75,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
+            // ->pages([
+            //     Pages\Dashboard::class,
+            // ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,

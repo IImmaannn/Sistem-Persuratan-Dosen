@@ -17,7 +17,9 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class VerifikasiPermohonanResource extends Resource
 {
     protected static ?string $model = PermohonanSurat::class;
+    protected static ?string $navigationLabel = 'Dashboard';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?string $slug = 'dashboard-operator';
 
    public static function form(Form $form): Form
     {

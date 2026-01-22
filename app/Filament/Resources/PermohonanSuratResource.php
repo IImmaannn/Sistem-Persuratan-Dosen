@@ -26,87 +26,124 @@ class PermohonanSuratResource extends Resource
     protected static ?string $navigationLabel = 'Permohonan Surat';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    public static function form(Form $form): Form
+   public static function form(Form $form): Form
     {
-        $type = request()->query('type');
+        // Ambil type dari request (untuk tampilan awal) atau dari state form (saat edit/error)
+        $type = request()->query('type'); 
 
         return $form
             ->schema([
                 // 1. DATA DOSEN (Tetap Sama)
-                Section::make('Data Dosen')
+                Forms\Components\Section::make('Data Dosen')
                     ->description('Informasi otomatis dari profil Anda')
                     ->schema([
                         Forms\Components\TextInput::make('nama_dosen')
                             ->default(fn () => auth()->user()->name)
                             ->disabled()
                             ->dehydrated(false),
-
                         Forms\Components\TextInput::make('nip')
                             ->default(fn () => auth()->user()->profile?->nip)
                             ->disabled()
                             ->dehydrated(false),
-                    ])
-                    ->columns(2),
+                        // Hidden Field untuk menyimpan tipe surat agar tidak hilang saat submit
+                        Forms\Components\Hidden::make('tipe_surat_temp')
+                            ->default($type)
+                            ->dehydrated(false), 
+                    ])->columns(2),
 
-                // 2. DETAIL PERMOHONAN (Logika Tanpa Tabrakan)
-                // match memastikan hanya SATU relationship yang aktif per request
-                ...match ($type) {
-                    'penelitian' => [
-                        Section::make('Detail Permohonan Penelitian')
+                // 2. DETAIL PERMOHONAN (Dengan Wrapper Relasi yang Aman)
+                Forms\Components\Section::make('Detail Permohonan')
+                    ->schema([
+                        // Field Config ID (Hanya muncul jika tipe 'penelitian')
+                        Forms\Components\Select::make('config_id')
+                            ->label('Jurnal Penelitian')
+                            ->relationship('config', 'value', fn ($query) => 
+                                $query->where('kategori', 'jenis_penelitian')
+                            )
+                            ->required(fn () => request()->query('type') === 'penelitian')
+                            ->visible(fn () => request()->query('type') === 'penelitian')
+                            ->columnSpanFull(),
+
+                        // Wrapper Relasi 'keteranganEssai'
+                        // Kita gabungkan semua kemungkinan kolom di sini, tapi atur visible-nya
+                        Forms\Components\Group::make()
+                            ->relationship('keteranganEssai')
                             ->schema([
-                                // config_id di luar Group relasi agar masuk ke tabel permohonan_surats
-                                Select::make('config_id')
-                                    ->label('Jurnal Penelitian')
-                                    ->relationship('config', 'value', fn ($query) => 
-                                        $query->where('kategori', 'jenis_penelitian')
-                                    )
+                                // --- BAGIAN PENELITIAN ---
+                                Forms\Components\TextInput::make('kolom_1')
+                                    ->label('Nama Jurnal')
                                     ->required()
-                                    ->columnSpanFull(),
+                                    ->visible(fn () => request()->query('type') === 'penelitian'),
+                                    
+                                Forms\Components\TextInput::make('kolom_2')
+                                    ->label('e-ISSN')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'penelitian'),
 
-                                // Relasi detail ke keterangan_essais
-                                Group::make()
-                                    ->relationship('keteranganEssai') 
-                                    ->schema([
-                                        TextInput::make('kolom_1')->label('Nama Jurnal')->required()->columnSpanFull(),
-                                        TextInput::make('kolom_2')->label('e-ISSN')->required()->columnSpanFull(),
-                                        TextInput::make('kolom_3')->label('Judul Penelitian')->required()->columnSpanFull(),
-                                        TextInput::make('kolom_4')->label('Link Jurnal')->url()->required()->columnSpanFull(),
-                                    ])->columnSpanFull(),
-                            ])->columns(1),
-                    ],
+                                Forms\Components\TextInput::make('kolom_3')
+                                    ->label('Judul Penelitian')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'penelitian'),
 
-                    'penunjang' => [
-                        Section::make('Detail Permohonan Penunjang')
-                            ->schema([
-                                Group::make()
-                                    ->relationship('keteranganEssai')
-                                    ->schema([
-                                        TextInput::make('kolom_5')->label('Nama Kegiatan')->required()->columnSpanFull(),
-                                        DatePicker::make('kolom_6')->label('Tanggal Kegiatan')->required()->columnSpanFull(),
-                                    ])->columnSpanFull(),
-                            ])->columns(1),
-                    ],
+                                Forms\Components\TextInput::make('kolom_4')
+                                    ->label('Link Jurnal')
+                                    ->url()
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'penelitian'),
 
-                    'narasumber' => [
-                        Section::make('Detail Permohonan Narasumber')
-                            ->schema([
-                                Group::make()
-                                    ->relationship('keteranganEssai')
-                                    ->schema([
-                                        TextInput::make('kolom_1')->label('Nama Kegiatan')->required()->columnSpanFull(),
-                                        TextInput::make('kolom_2')->label('Penyelenggara')->required()->columnSpanFull(),
-                                        TextInput::make('kolom_3')->label('Tempat Kegiatan')->required()->columnSpanFull(),
-                                        DatePicker::make('kolom_4')->label('Tanggal Kegiatan')->required()->columnSpanFull(),
-                                        Textarea::make('kolom_5')->label('Keterangan')->rows(3)->columnSpanFull(),
-                                    ])->columnSpanFull(),
-                            ])->columns(1),
-                    ],
+                                // --- BAGIAN PENUNJANG ---
+                                // Perhatikan: Kita pakai nama field yang SAMA ('kolom_5', dst) tapi label & visible beda
+                                // Filament mungkin bentrok jika nama field sama dalam satu form.
+                                // TRIK: Karena strukturnya dinamis, kita pakai Logic "Visible" murni.
+                                
+                                // Field Kolom 5 (Dipakai Penunjang & Narasumber beda label)
+                                Forms\Components\TextInput::make('kolom_5_penunjang')
+                                    ->label('Nama Kegiatan')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'penunjang')
+                                    ->statePath('kolom_5'), // Simpan ke kolom_5 database
 
-                    default => [],
-                },
+                                Forms\Components\DatePicker::make('kolom_6_penunjang')
+                                    ->label('Tanggal Kegiatan')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'penunjang')
+                                    ->statePath('kolom_6'),
+
+                                // --- BAGIAN NARASUMBER ---
+                                // Mapping ulang ke kolom 1-5 database
+                                Forms\Components\TextInput::make('kolom_1_nara')
+                                    ->label('Nama Kegiatan')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->statePath('kolom_1'), // Override state path ke kolom_1
+
+                                Forms\Components\TextInput::make('kolom_2_nara')
+                                    ->label('Penyelenggara')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->statePath('kolom_2'),
+
+                                Forms\Components\TextInput::make('kolom_3_nara')
+                                    ->label('Tempat Kegiatan')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->statePath('kolom_3'),
+
+                                Forms\Components\DatePicker::make('kolom_4_nara')
+                                    ->label('Tanggal Kegiatan')
+                                    ->required()
+                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->statePath('kolom_4'),
+
+                                Forms\Components\Textarea::make('kolom_5_nara')
+                                    ->label('Keterangan')
+                                    ->rows(3)
+                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->statePath('kolom_5'),
+                            ]),
+                    ]),
             ]);
     }
-
     public static function table(Table $table): Table
     {
         return $table
@@ -154,4 +191,10 @@ class PermohonanSuratResource extends Resource
         return parent::getEloquentQuery()
             ->where('user_id', auth()->id());
     }
+    public static function canViewAny(): bool
+    {
+        // Menu ini CUMA boleh dilihat sama Dosen
+        return auth()->user()->role === 'Dosen';
+    }
 }
+
