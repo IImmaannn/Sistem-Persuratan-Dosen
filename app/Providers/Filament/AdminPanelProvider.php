@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Login;
 use App\Models\User;
 use App\Settings\KaidoSetting;
