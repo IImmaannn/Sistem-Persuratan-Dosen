@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms\Get;
 use App\Filament\Resources\PermohonanSuratResource\Pages;
 use App\Models\PermohonanSurat;
 use App\Models\Config;
@@ -69,27 +70,31 @@ class PermohonanSuratResource extends Resource
                         Forms\Components\Group::make()
                             ->relationship('keteranganEssai')
                             ->schema([
+                                // Kita simpan tipe surat di sini agar tidak hilang saat tombol Simpan ditekan
+                                Forms\Components\Hidden::make('memori_tipe')
+                                    ->default(fn() => request()->query('type')) // Ambil dari link saat pertama buka
+                                    ->dehydrated(false), // Gak perlu disimpan ke DB, cuma buat ingatan form
                                 // --- BAGIAN PENELITIAN ---
                                 Forms\Components\TextInput::make('kolom_1')
                                     ->label('Nama Jurnal')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'penelitian'),
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'penelitian'),
                                     
                                 Forms\Components\TextInput::make('kolom_2')
                                     ->label('e-ISSN')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'penelitian'),
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'penelitian'),
 
                                 Forms\Components\TextInput::make('kolom_3')
                                     ->label('Judul Penelitian')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'penelitian'),
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'penelitian'),
 
                                 Forms\Components\TextInput::make('kolom_4')
                                     ->label('Link Jurnal')
                                     ->url()
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'penelitian'),
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'penelitian'),
 
                                 // --- BAGIAN PENUNJANG ---
                                 // Perhatikan: Kita pakai nama field yang SAMA ('kolom_5', dst) tapi label & visible beda
@@ -100,13 +105,13 @@ class PermohonanSuratResource extends Resource
                                 Forms\Components\TextInput::make('kolom_5_penunjang')
                                     ->label('Nama Kegiatan')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'penunjang')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'penunjang')
                                     ->statePath('kolom_5'), // Simpan ke kolom_5 database
 
                                 Forms\Components\DatePicker::make('kolom_6_penunjang')
                                     ->label('Tanggal Kegiatan')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'penunjang')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'penunjang')
                                     ->statePath('kolom_6'),
 
                                 // --- BAGIAN NARASUMBER ---
@@ -114,31 +119,31 @@ class PermohonanSuratResource extends Resource
                                 Forms\Components\TextInput::make('kolom_1_nara')
                                     ->label('Nama Kegiatan')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'narasumber')
                                     ->statePath('kolom_1'), // Override state path ke kolom_1
 
                                 Forms\Components\TextInput::make('kolom_2_nara')
                                     ->label('Penyelenggara')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'narasumber')
                                     ->statePath('kolom_2'),
 
                                 Forms\Components\TextInput::make('kolom_3_nara')
                                     ->label('Tempat Kegiatan')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'narasumber')
                                     ->statePath('kolom_3'),
 
                                 Forms\Components\DatePicker::make('kolom_4_nara')
                                     ->label('Tanggal Kegiatan')
                                     ->required()
-                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'narasumber')
                                     ->statePath('kolom_4'),
 
                                 Forms\Components\Textarea::make('kolom_5_nara')
                                     ->label('Keterangan')
                                     ->rows(3)
-                                    ->visible(fn () => request()->query('type') === 'narasumber')
+                                    ->visible(fn (Get $get) => $get('memori_tipe') === 'narasumber')
                                     ->statePath('kolom_5'),
                             ]),
                     ]),
