@@ -22,7 +22,7 @@ class CreatePermohonanSurat extends CreateRecord
         return 'Permohonan surat berhasil dikirim!';
     }
 
-   protected function mutateFormDataBeforeCreate(array $data): array
+   protected function mutateFormDataBeforeCreate (array $data): array
     {
         // 1. Ambil data kolom 1-7 yang ada di dalam array relasi
         // Filament biasanya membungkus data ini sesuai nama relasi di Resource
@@ -41,10 +41,12 @@ class CreatePermohonanSurat extends CreateRecord
         }
 
         // 4. Logika config_id dan user_id yang sudah ada
-        $type = request()->query('type') ?? 'penelitian';
-        $config = \App\Models\Config::where('key', $type)->first();
-        if ($config) {
-            $data['config_id'] = $config->id;
+        if (!isset($data['config_id'])) {
+            $type = request()->query('type') ?? 'penelitian';
+            $config = \App\Models\Config::where('key', $type)->first();
+            if ($config) {
+                $data['config_id'] = $config->id;
+            }
         }
         
         $data['user_id'] = auth()->id();

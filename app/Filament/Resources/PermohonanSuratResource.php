@@ -27,11 +27,8 @@ class PermohonanSuratResource extends Resource
     protected static ?string $navigationLabel = 'Permohonan Surat';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-  public static function form(Form $form): Form
+    public static function form(Form $form): Form
     {
-        // Ambil type dari request (untuk tampilan awal)
-        $type = request()->query('type');
-
         return $form
             ->schema([
                 // 1. DATA DOSEN (Tetap Sama)
@@ -47,122 +44,83 @@ class PermohonanSuratResource extends Resource
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
-
+                    
                 // 2. DETAIL PERMOHONAN
                 Forms\Components\Section::make('Detail Permohonan')
                     ->schema([
+                        // PENTING: Memori tipe ditaruh di sini agar bisa diakses semua
+                        Forms\Components\Hidden::make('memori_tipe')
+                            ->default(fn() => request()->query('type'))
+                            ->live()
+                            ->afterStateHydrated(fn($state, $set) => $set('memori_tipe', request()->query('type') ?? $state))
+                            ->dehydrated(false),
+
+                        // === INTEGRASI LOGIKA CONFIG_ID BARU ===
                         
-                        // === BAGIAN LOGIKA CONFIG_ID (Teknik Pecah Jalur) ===
-                        
-                        // JALUR 1: Jika Surat PENELITIAN (Dosen Milih Sendiri)
-                        Forms\Components\Select::make('config_id_penelitian')
+                        // A. HIDDEN FIELD TUNGGAL (Si Penampung ID Asli ke Database)
+                        Forms\Components\Hidden::make('config_id')
+                            ->required()
+                            ->dehydrated(true),
+
+                        // B. UI SELECT (Hanya muncul untuk Penelitian)
+                        Forms\Components\Select::make('ui_penelitian')
                             ->label('Jenis Output Penelitian')
                             ->options(\App\Models\Config::where('kategori', 'jenis_penelitian')->pluck('value', 'id'))
-                            ->required()
-                            // Hanya muncul & aktif jika memori mencatat 'penelitian'
-                            ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penelitian')
-                            ->statePath('config_id'), // SIMPAN KE KOLOM config_id
+                            ->visible(fn (Get $get) => $get('memori_tipe') === 'penelitian')
+                            ->live()
+                            // Setiap dosen milih di sini, nilainya dilempar ke config_id yang asli
+                            ->afterStateUpdated(fn ($state, $set) => $set('config_id', $state))
+                            ->required(fn (Get $get) => $get('memori_tipe') === 'penelitian'),
 
-                        // JALUR 2: Jika Surat PENUNJANG (Otomatis ID 3)
-                        Forms\Components\Hidden::make('config_id_penunjang')
-                            ->default(3) // ID 3 = Penunjang
-                            ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penunjang')
-                            ->statePath('config_id'), // SIMPAN KE KOLOM config_id
+                        // C. LOGIKA OTOMATIS (Untuk Penunjang & Narasumber)
+                        Forms\Components\Placeholder::make('auto_id_trigger')
+                            ->hidden()
+                            ->afterStateHydrated(function ($set, $get) {
+                                $tipe = request()->query('type') ?? $get('memori_tipe');
+                                // ID 3 = Penunjang, ID 2 = Narasumber
+                                if ($tipe === 'penunjang') $set('config_id', 3);
+                                if ($tipe === 'narasumber') $set('config_id', 2);
+                            }),
 
-                        // JALUR 3: Jika Surat NARASUMBER (Otomatis ID 2)
-                        Forms\Components\Hidden::make('config_id_narasumber')
-                            ->default(2) // ID 2 = Narasumber
-                            ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'narasumber')
-                            ->statePath('config_id'), // SIMPAN KE KOLOM config_id
-
-                        // === BAGIAN DETAIL KETERANGAN ESAI ===
-
+                        // === DETAIL KETERANGAN (Jalur Relasi ke keterangan_essais) ===
                         Forms\Components\Group::make()
                             ->relationship('keteranganEssai')
                             ->schema([
-                                // MEMORI TIPE (Penyimpan Status Surat)
-                                Forms\Components\Hidden::make('memori_tipe')
-                                    ->default(fn() => request()->query('type'))
-                                    ->dehydrated(false), // Tidak disimpan ke DB
-
-                                // --- BAGIAN PENELITIAN ---
+                                // PENTING: Gunakan ../ karena memori_tipe ada di luar Group ini
                                 Forms\Components\TextInput::make('kolom_1')
                                     ->label('Nama Jurnal')
                                     ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penelitian'),
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),
                                     
-                                Forms\Components\TextInput::make('kolom_2')
-                                    ->label('e-ISSN')
-                                    ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penelitian'),
-
-                                Forms\Components\TextInput::make('kolom_3')
-                                    ->label('Judul Penelitian')
-                                    ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penelitian'),
-
-                                Forms\Components\TextInput::make('kolom_4')
-                                    ->label('Link Jurnal')
-                                    ->url()
-                                    ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penelitian'),
-
-                                // --- BAGIAN PENUNJANG ---
                                 Forms\Components\TextInput::make('kolom_5_penunjang')
                                     ->label('Nama Kegiatan')
                                     ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penunjang')
-                                    ->statePath('kolom_5'), // Simpan ke kolom_5
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penunjang')
+                                    ->statePath('kolom_5'),
 
                                 Forms\Components\DatePicker::make('kolom_6_penunjang')
                                     ->label('Tanggal Kegiatan')
                                     ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'penunjang')
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penunjang')
                                     ->statePath('kolom_6'),
 
-                                // --- BAGIAN NARASUMBER ---
                                 Forms\Components\TextInput::make('kolom_1_nara')
                                     ->label('Nama Kegiatan')
                                     ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'narasumber')
-                                    ->statePath('kolom_1'), // Simpan ke kolom_1
-
-                                Forms\Components\TextInput::make('kolom_2_nara')
-                                    ->label('Penyelenggara')
-                                    ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'narasumber')
-                                    ->statePath('kolom_2'),
-
-                                Forms\Components\TextInput::make('kolom_3_nara')
-                                    ->label('Tempat Kegiatan')
-                                    ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'narasumber')
-                                    ->statePath('kolom_3'),
-
-                                Forms\Components\DatePicker::make('kolom_4_nara')
-                                    ->label('Tanggal Kegiatan')
-                                    ->required()
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'narasumber')
-                                    ->statePath('kolom_4'),
-
-                                Forms\Components\Textarea::make('kolom_5_nara')
-                                    ->label('Keterangan')
-                                    ->rows(3)
-                                    ->visible(fn (\Filament\Forms\Get $get) => $get('memori_tipe') === 'narasumber')
-                                    ->statePath('kolom_5'),
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'narasumber')
+                                    ->statePath('kolom_1'),
+                                
+                                // ... Tambahkan kolom narasumber lainnya jika perlu
                             ]),
                     ]),
             ]);
     }
+
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                // Perihal mengambil dari relasi config
-                TextColumn::make('config.value')
-                    ->label('Perihal'),
-
-                // Menampilkan status dengan badge
+                TextColumn::make('config.value')->label('Perihal'),
                 TextColumn::make('status_terakhir')
                     ->label('Status')
                     ->badge()
@@ -174,14 +132,8 @@ class PermohonanSuratResource extends Resource
                         default => 'secondary',
                     }),
             ])
-            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
             ]);
     }
 
@@ -198,13 +150,11 @@ class PermohonanSuratResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->where('user_id', auth()->id());
+        return parent::getEloquentQuery()->where('user_id', auth()->id());
     }
+
     public static function canViewAny(): bool
     {
-        // Menu ini CUMA boleh dilihat sama Dosen
         return auth()->user()->role === 'Dosen';
     }
 }
-
