@@ -91,6 +91,21 @@ class PermohonanSuratResource extends Resource
                                     ->label('Nama Jurnal')
                                     ->required()
                                     ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),
+				                Forms\Components\TextInput::make('kolom_2')
+                                    ->label('e-ISSN')
+                                    ->required()
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),
+
+                                Forms\Components\TextInput::make('kolom_3')
+                                    ->label('Judul Penelitian')
+                                    ->required()
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),
+
+                                Forms\Components\TextInput::make('kolom_4')
+                                    ->label('Link Jurnal')
+                                    ->url()
+                                    ->required()
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),
                                     
                                 Forms\Components\TextInput::make('kolom_5_penunjang')
                                     ->label('Nama Kegiatan')
@@ -109,6 +124,29 @@ class PermohonanSuratResource extends Resource
                                     ->required()
                                     ->visible(fn (Get $get) => $get('../memori_tipe') === 'narasumber')
                                     ->statePath('kolom_1'),
+				                Forms\Components\TextInput::make('kolom_2_nara')
+                                    ->label('Penyelenggara')
+                                    ->required()
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'narasumber')
+                                    ->statePath('kolom_2'),
+
+                                Forms\Components\TextInput::make('kolom_3_nara')
+                                    ->label('Tempat Kegiatan')
+                                    ->required()
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'narasumber')
+                                    ->statePath('kolom_3'),
+
+                                Forms\Components\DatePicker::make('kolom_4_nara')
+                                    ->label('Tanggal Kegiatan')
+                                    ->required()
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'narasumber')
+                                    ->statePath('kolom_4'),
+
+                                Forms\Components\Textarea::make('kolom_5_nara')
+                                    ->label('Keterangan')
+                                    ->rows(3)
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'narasumber')
+                                    ->statePath('kolom_5'),
                                 
                                 // ... Tambahkan kolom narasumber lainnya jika perlu
                             ]),

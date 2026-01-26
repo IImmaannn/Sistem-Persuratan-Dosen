@@ -41,12 +41,13 @@ class CreatePermohonanSurat extends CreateRecord
         }
 
         // 4. Logika config_id dan user_id yang sudah ada
-        if (!isset($data['config_id'])) {
-            $type = request()->query('type') ?? 'penelitian';
-            $config = \App\Models\Config::where('key', $type)->first();
-            if ($config) {
-                $data['config_id'] = $config->id;
-            }
+        $type = request()->query('type');
+
+        // Paksa isi config_id berdasarkan tipe URL
+        if ($type === 'penunjang') {
+            $data['config_id'] = 3; // ID 3 = Penunjang
+        } elseif ($type === 'narasumber') {
+            $data['config_id'] = 2; // ID 2 = Narasumber
         }
         
         $data['user_id'] = auth()->id();
