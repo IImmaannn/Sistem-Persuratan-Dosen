@@ -105,19 +105,18 @@ class PermohonanSuratResource extends Resource
                                     ->label('Link Jurnal')
                                     ->url()
                                     ->required()
-                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),
-                                    
-                                Forms\Components\TextInput::make('kolom_5_penunjang')
+                                    ->visible(fn (Get $get) => $get('../memori_tipe') === 'penelitian'),                                        
+                                Forms\Components\TextInput::make('kolom_1_penunjang')
                                     ->label('Nama Kegiatan')
                                     ->required()
                                     ->visible(fn (Get $get) => $get('../memori_tipe') === 'penunjang')
-                                    ->statePath('kolom_5'),
+                                    ->statePath('kolom_1'),
 
-                                Forms\Components\DatePicker::make('kolom_6_penunjang')
+                                Forms\Components\DatePicker::make('kolom_2_penunjang')
                                     ->label('Tanggal Kegiatan')
                                     ->required()
                                     ->visible(fn (Get $get) => $get('../memori_tipe') === 'penunjang')
-                                    ->statePath('kolom_6'),
+                                    ->statePath('kolom_2'),
 
                                 Forms\Components\TextInput::make('kolom_1_nara')
                                     ->label('Nama Kegiatan')
@@ -171,8 +170,93 @@ class PermohonanSuratResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-            ]);
+            Tables\Actions\EditAction::make('verifikasi')
+                ->label('Verifikasi')
+                ->icon('heroicon-o-check-badge')
+                ->color('primary')
+                ->modalHeading('Verifikasi Permohonan Surat')
+                ->modalWidth('4xl')
+                // 1. KITA ISI FORM MODAL DENGAN DATA DOSEN & DETAIL
+                ->form([
+                    Grid::make(2)
+                        ->schema([
+                            TextInput::make('nama_dosen')->disabled(), // Ambil dari tabel permohonan
+                            TextInput::make('nip')->disabled(),
+                        ]),
+                    
+                    Section::make('Detail Isian Dosen')
+                        ->description('Data di bawah ini adalah inputan dari Dosen')
+                        ->schema([
+                            // Tampilkan kolom sesuai jenis surat (Logika Match)
+                            TextInput::make('detail_1')
+                                ->label(fn ($record) => match($record->config_id) {
+                                    1 => 'Nama Jurnal', // Penelitian
+                                    2 => 'Nama Kegiatan', // Narasumber
+                                    default => 'Info 1'
+                                })
+                                ->disabled(),
+                            
+                            TextInput::make('detail_2')
+                                ->label(fn ($record) => match($record->config_id) {
+                                    1 => 'e-ISSN',
+                                    2 => 'Penyelenggara',
+                                    default => 'Info 2'
+                                })
+                                ->disabled(),
+
+                            Textarea::make('detail_3')
+                                ->label('Judul / Keterangan')
+                                ->disabled()
+                                ->columnSpanFull(),
+                        ]),
+
+                    Section::make('Keputusan Operator')
+                        ->schema([
+                            Select::make('status_terakhir')
+                                ->label('Hasil Verifikasi')
+                                ->options([
+                                    'Selesai' => 'Setujui & Terbitkan',
+                                    'Ditolak' => 'Tolak Permohonan',
+                                ])
+                                ->required()
+                                ->live(),
+                            Textarea::make('catatan_operator')
+                                ->label('Alasan (Jika Ditolak)')
+                                ->visible(fn ($get) => $get('status_terakhir') === 'Ditolak')
+                                ->required(fn ($get) => $get('status_terakhir') === 'Ditolak'),
+                        ]),
+                ])
+                // 2. KITA TARIK DATA DARI DATABASE KE MODAL
+                ->fillForm(function ($record) {
+                    $detail = $record->keteranganEssai; // Relasi yang kita buat kemarin
+                    return [
+                        'nama_dosen' => $record->user->name,
+                        'nip' => $record->user->profile?->nip,
+                        // Mapping data dari kolom_1, kolom_2, dsb ke form modal
+                        'detail_1' => $detail?->kolom_1,
+                        'detail_2' => $detail?->kolom_2,
+                        'detail_3' => match($record->config_id) {
+                            1 => $detail?->kolom_3, // Isinya "half marathon" atau "bukit nevada"
+                            3 => $detail?->kolom_5,
+                            default => $detail?->kolom_3,
+                        },
+                    ];
+                })
+                // 3. KITA SIMPAN HASIL VERIFIKASI
+                ->action(function (array $data, $record): void {
+                    $record->update([
+                        'status_terakhir' => $data['status_terakhir'],
+                        // Pastikan lo punya kolom catatan_operator di tabel permohonan_surats
+                        'nomor_surat' => $data['status_terakhir'] === 'Selesai' ? 'NOMOR/OTOMATIS/2026' : null,
+                    ]);
+
+                    // Notification biar keren
+                    \Filament\Notifications\Notification::make()
+                        ->title('Status Berhasil Diperbarui')
+                        ->success()
+                        ->send();
+                }),
+        ]);
     }
 
     public static function getRelations(): array { return []; }

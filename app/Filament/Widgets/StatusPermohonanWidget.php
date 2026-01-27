@@ -26,8 +26,9 @@ class StatusPermohonanWidget extends BaseWidget
                     ->label('Tanggal') // [cite: 237]
                     ->date(),
 
-                Tables\Columns\TextColumn::make('jenisSurat.nama_jenis')
-                    ->label('Prihal'), // Sesuai typo di wireframe [cite: 238]
+               // PERBAIKAN: Ubah dari jenisSurat.nama_jenis ke config.value
+                Tables\Columns\TextColumn::make('config.value')
+                    ->label('Perihal'), // Tetap pakai label Prihal sesuai maumu
 
                 Tables\Columns\TextColumn::make('status_terakhir')
                     ->label('Status') // 

@@ -27,13 +27,32 @@ class HistoryPermohonanWidget extends BaseWidget
                     ->label('Tanggal') // [cite: 241]
                     ->date(),
 
-                Tables\Columns\TextColumn::make('jenisSurat.nama_jenis')
-                    ->label('Perihal') // [cite: 242]
-                    ->searchable(), // Fitur Search sesuai wireframe 
+                // Tables\Columns\TextColumn::make('jenisSurat.nama_jenis')
+                //     ->label('Perihal') // [cite: 242]
+                //     ->searchable(), // Fitur Search sesuai wireframe 
 
-                Tables\Columns\TextColumn::make('keterangan_esai')
-                    ->label('Keterangan') // [cite: 244]
-                    ->limit(100),
-            ]);
+                // Tables\Columns\TextColumn::make('keterangan_esai')
+                //     ->label('Keterangan') // [cite: 244]
+                //     ->limit(100),
+                Tables\Columns\TextColumn::make('config.value')
+                    ->label('Perihal')
+                    ->searchable(),
+                // PERBAIKAN: Ambil data dari relasi 'keteranganEssai' secara dinamis
+                Tables\Columns\TextColumn::make('keterangan')
+                    ->label('Keterangan')
+                    ->getStateUsing(function ($record) {
+                        $detail = $record->keteranganEssai;
+                        if (!$detail) return 'Tidak ada detail';
+
+                        // Ambil kolom yang sesuai berdasarkan jenis surat
+                        return match ($record->config_id) {
+                            1, 4, 5 => $detail->kolom_3, // Penelitian: Judul Penelitian
+                            3 => $detail->kolom_1, // Penunjang: Nama Kegiatan
+                            2 => $detail->kolom_1, // Narasumber: Nama Kegiatan
+                            default => '-',
+                        };
+                })
+                ->limit(100),
+         ]);
     }
 }
