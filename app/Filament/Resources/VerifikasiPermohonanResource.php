@@ -21,42 +21,89 @@ class VerifikasiPermohonanResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $slug = 'dashboard-operator';
 
-   public static function form(Form $form): Form
+    public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                // 1. INFORMASI DOSEN (Read-Only)
+                // 1. INFORMASI PENGAJU (Read-Only)
                 Forms\Components\Section::make('Informasi Pengaju')
-                    ->description('Data identitas dosen pengaju surat')
                     ->schema([
                         Forms\Components\TextInput::make('user.name')
-                            ->label('Nama Dosen')
-                            ->disabled(), // Operator tidak boleh ubah nama dosen
-
+                        ->label('Nama Dosen')
+                        ->disabled()
+                        ->dehydrated(false) // Gak usah disimpen, cuma tampil
+                        ->afterStateHydrated(function ($component, $record) {
+                            // Ambil nama dari relasi user
+                            $component->state($record->user?->name ?? '-');
+                        }), 
                         Forms\Components\TextInput::make('user.profile.nip')
-                            ->label('NIP')
-                            ->disabled(),
+                        ->label('NIP')
+                        ->disabled()
+                        ->dehydrated(false)
+                        ->afterStateHydrated(function ($component, $record) {
+                            // Ambil NIP dari relasi user -> profile
+                            // Pastikan model User lo punya relasi 'profile' ya!
+                            $component->state($record->user?->profile?->nip ?? '-');
+                        }),
                     ])->columns(2),
 
-                // 2. KETERANGAN ESAI (Bisa Direvisi oleh Operator)
-                // Menggunakan relasi hasOne yang sudah kita perbaiki 
+                // 2. VERIFIKASI DETAIL ESAI (Konteks Tetap di PermohonanSurat)
                 Forms\Components\Section::make('Verifikasi Detail Esai')
-                    ->description('Operator dapat merevisi kolom di bawah jika informasi tidak jelas (SRS-Permohonan-03)') 
+                    ->description('Label dan kolom muncul otomatis sesuai jenis surat') 
                     ->schema([
-                        Forms\Components\Group::make()
-                            ->relationship('keteranganEssai') // Kunci sinkronisasi ke Navicat
-                            ->schema([
-                                // Tampilkan semua kolom agar bisa dicek/direvisi
-                                Forms\Components\TextInput::make('kolom_1')->label('Kolom 1 / Nama Jurnal / Nama Kegiatan'),
-                                Forms\Components\TextInput::make('kolom_2')->label('Kolom 2 / e-ISSN / Penyelenggara'),
-                                Forms\Components\TextInput::make('kolom_3')->label('Kolom 3 / Judul / Tempat'),
-                                Forms\Components\TextInput::make('kolom_4')->label('Kolom 4 / Link / Tanggal'),
-                                Forms\Components\Textarea::make('kolom_5')->label('Kolom 5 / Keterangan Tambahan')->rows(3),
-                                // Tambahkan kolom 6-7 jika diperlukan sesuai ERD [cite: 98, 99]
-                            ]),
+                        // KOLOM 1: Nama Jurnal / Kegiatan
+                        // Gunakan dot notation 'keteranganEssai.kolom_1'
+                        Forms\Components\TextInput::make('keteranganEssai.kolom_1')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4 ,5 => 'Nama Jurnal',
+                                2, 3 => 'Nama Kegiatan',
+                                default => 'Detail 1',
+                            }) 
+                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_1)),
+
+                        // KOLOM 2: e-ISSN / Penyelenggara / Tanggal
+                        Forms\Components\TextInput::make('keteranganEssai.kolom_2')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4, 5=> 'e-ISSN',
+                                2 => 'Penyelenggara',
+                                3 => 'Tanggal Kegiatan', // Sesuai isian dosen
+                                default => 'Detail 2',
+                            })
+                            // Sekarang visible() akan bekerja karena bisa baca config_id
+                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 3, 4, 5]))
+                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_2)),
+
+                        // KOLOM 3: Judul / Tempat
+                        Forms\Components\TextInput::make('keteranganEssai.kolom_3')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4, 5 => 'Judul Penelitian',
+                                2 => 'Tempat Kegiatan',
+                                default => 'Detail 3',
+                            })
+                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
+                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_3)),
+
+                        Forms\Components\TextInput::make('keteranganEssai.kolom_4')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4, 5 => 'Link Jurnal',
+                                2 => 'Tanggal Kegiatan',
+                                default => 'Detail 3',
+                            })
+                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
+                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_4)),
+
+                        // KOLOM 5: Keterangan / Nama Kegiatan Penunjang
+                        Forms\Components\Textarea::make('keteranganEssai.kolom_5')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                2 => 'Nama Kegiatan / Keterangan',
+                                default => 'Keterangan Tambahan',
+                            })
+                            ->visible(fn ($record) => in_array($record?->config_id, [2]))
+                            ->columnSpanFull()
+                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_5))
                     ]),
 
-                // 3. STATUS VERIFIKASI
+                // 3. TINDAKAN OPERATOR
                 Forms\Components\Section::make('Tindakan Operator')
                     ->schema([
                         Forms\Components\Select::make('status_terakhir')
@@ -140,5 +187,11 @@ class VerifikasiPermohonanResource extends Resource
             'create' => Pages\CreateVerifikasiPermohonan::route('/create'),
             'edit' => Pages\EditVerifikasiPermohonan::route('/{record}/edit'),
         ];
+    }
+    public static function getEloquentQuery(): Builder
+    {
+        // Kita "paksa" sistem buat bawa data relasi keteranganEssai dan config
+        return parent::getEloquentQuery()
+            ->with(['keteranganEssai', 'config']);
     }
 }

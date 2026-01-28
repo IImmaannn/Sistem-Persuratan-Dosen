@@ -180,8 +180,16 @@ class PermohonanSuratResource extends Resource
                 ->form([
                     Grid::make(2)
                         ->schema([
-                            TextInput::make('nama_dosen')->disabled(), // Ambil dari tabel permohonan
-                            TextInput::make('nip')->disabled(),
+                            // TextInput::make('nama_dosen')->disabled(), // Ambil dari tabel permohonan
+                            // TextInput::make('nip')->disabled(),
+                            Forms\Components\TextInput::make('nama_dosen')
+                                ->default(fn () => auth()->user()->name)
+                                ->disabled()
+                                ->dehydrated(false),
+                            Forms\Components\TextInput::make('nip')
+                                ->default(fn () => auth()->user()->profile?->nip)
+                                ->disabled()
+                                ->dehydrated(false),
                         ]),
                     
                     Section::make('Detail Isian Dosen')
