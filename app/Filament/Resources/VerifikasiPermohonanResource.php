@@ -102,6 +102,20 @@ class VerifikasiPermohonanResource extends Resource
                             ->columnSpanFull()
                             ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_5))
                     ]),
+                Forms\Components\Section::make('Catatan Penolakan Pimpinan')
+                    ->description('Alasan mengapa pimpinan menolak permohonan ini sebelumnya.')
+                    ->schema([
+                        Forms\Components\Placeholder::make('alasan_terakhir')
+                            ->label('Alasan Terakhir')
+                            ->content(fn ($record) => 
+                                $record->logPersetujuans() // Pastikan ada relasi ini di model
+                                    ->where('status_aksi', 'Ditolak')
+                                    ->latest()
+                                    ->first()?->catatan ?? 'Belum ada catatan penolakan.'
+                            )
+                    ])
+                    ->collapsible()
+                    ->visible(fn ($record) => $record->status_terakhir === 'Revisi OCS'),
 
                 // 3. TINDAKAN OPERATOR
                 Forms\Components\Section::make('Tindakan Operator')
@@ -110,12 +124,13 @@ class VerifikasiPermohonanResource extends Resource
                             ->label('Status Verifikasi Administrasi')
                             ->options([
                                 'Proses Verifikasi' => 'Proses Verifikasi',
-                                'Revisi' => 'Perlu Revisi',
-                                'Disetujui Operator' => 'Lanjut ke Pimpinan',
+                                // 'Revisi' => 'Perlu Revisi',
+                                'Terverifikasi' => 'Lanjut ke Pimpinan',
                             ])
                             ->required()
                             ->native(false),
                     ])
+                
             ]);
     }
 
@@ -190,8 +205,8 @@ class VerifikasiPermohonanResource extends Resource
     }
     public static function getEloquentQuery(): Builder
     {
-        // Kita "paksa" sistem buat bawa data relasi keteranganEssai dan config
         return parent::getEloquentQuery()
-            ->with(['keteranganEssai', 'config']);
+            ->with(['keteranganEssai', 'config'])
+            ->whereIn('status_terakhir', ['Draft', 'Proses Verifikasi', 'Revisi OCS']); 
     }
 }

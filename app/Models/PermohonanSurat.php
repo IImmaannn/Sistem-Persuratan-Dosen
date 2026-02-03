@@ -23,7 +23,7 @@ class PermohonanSurat extends Model
     // Relasi balik ke User
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
         // Relasi ke Config (Jenis Surat)
@@ -34,6 +34,11 @@ class PermohonanSurat extends Model
     // Relasi ke Detail Form (Keterangan Essai)
     public function keteranganEssai(): HasOne {
             return $this->hasOne(KeteranganEssai::class, 'permohonan_surat_id');
+    }
+    public function logPersetujuans()
+    {
+        // Gunakan 'permohonan_id' sesuai yang terlihat di error SQL lo sebelumnya
+        return $this->hasMany(LogPersetujuan::class, 'permohonan_id');
     }
 
 

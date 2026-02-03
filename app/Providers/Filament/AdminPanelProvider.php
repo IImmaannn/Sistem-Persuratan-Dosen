@@ -58,6 +58,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->homeUrl(fn () => match (auth()->user()?->role) {
+                'Supervisor', 'Manager', 'Wakil_Dekan', 'Dekan' => \App\Filament\Resources\PersetujuanSuratResource::getUrl(),
                 'Operator_Surat' => \App\Filament\Resources\VerifikasiPermohonanResource::getUrl(),
                 'Dosen' => '/', // Atau halaman spesifik dosen
                 default => '/',

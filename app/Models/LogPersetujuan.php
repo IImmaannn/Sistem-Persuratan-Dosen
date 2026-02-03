@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LogPersetujuan extends Model
 {
     protected $fillable = [
-        'permohonan_surat_id', 
-        'user_id', 
-        'status', 
+        'permohonan_id', 
+        'pimpinan_id', 
+        'status_aksi', 
         'catatan'
     ];
 
@@ -23,6 +23,6 @@ class LogPersetujuan extends Model
     }
 
     public function user() : BelongsTo {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'pimpinan_id');
     }
 }
