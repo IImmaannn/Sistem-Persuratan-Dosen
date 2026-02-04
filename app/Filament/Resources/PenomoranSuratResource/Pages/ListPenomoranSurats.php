@@ -10,10 +10,10 @@ class ListPenomoranSurats extends ListRecords
 {
     protected static string $resource = PenomoranSuratResource::class;
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\CreateAction::make(),
-        ];
-    }
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         Actions\CreateAction::make(),
+    //     ];
+    // }
 }

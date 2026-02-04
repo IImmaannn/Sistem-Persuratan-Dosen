@@ -87,7 +87,7 @@ class VerifikasiPermohonanResource extends Resource
                             ->label(fn ($record) => match ($record?->config_id) {
                                 1, 4, 5 => 'Link Jurnal',
                                 2 => 'Tanggal Kegiatan',
-                                default => 'Detail 3',
+                                default => 'Detail 4',
                             })
                             ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
                             ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_4)),

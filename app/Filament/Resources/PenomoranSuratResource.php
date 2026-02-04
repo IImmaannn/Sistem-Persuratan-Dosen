@@ -28,9 +28,86 @@ class PenomoranSuratResource extends Resource
             Forms\Components\Section::make('Detail Permohonan')
                 ->description('Data ini tidak dapat diubah oleh Operator Penomoran.')
                 ->schema([
-                    Forms\Components\TextInput::make('user.name')->label('Nama Dosen')->disabled(),
-                    Forms\Components\TextInput::make('config.value')->label('Jenis Surat')->disabled(),
-                    Forms\Components\Textarea::make('keteranganEssai.kolom_1')->label('Keterangan')->disabled()->columnSpanFull(),
+                    Forms\Components\TextInput::make('user.name')
+                    ->label('Nama Dosen')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->user?->name ?? '-');
+                    }),
+                    Forms\Components\TextInput::make('config.value')
+                    ->label('Jenis Surat')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->config?->value ?? '-');
+                    }),
+                    Forms\Components\Textarea::make('keteranganEssai.kolom_1')
+                    ->label(fn ($record) => match ($record?->config_id) {
+                        1, 4 ,5 => 'Nama Jurnal',
+                        2, 3 => 'Nama Kegiatan',
+                        default => 'Detail 1',
+                    })
+                    ->disabled()
+                    ->columnSpanFull()
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->keteranganEssai?->kolom_1 ?? '-');
+                    }),
+                    Forms\Components\Textarea::make('keteranganEssai.kolom_2')
+                    ->label(fn ($record) => match ($record?->config_id) {
+                        1, 4, 5=> 'e-ISSN',
+                        2 => 'Penyelenggara',
+                        3 => 'Tanggal Kegiatan', // Sesuai isian dosen
+                        default => 'Detail 2',
+                    })
+                    ->disabled()
+                    ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 3, 4, 5]))
+                    ->columnSpanFull()
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->keteranganEssai?->kolom_2 ?? '-');
+                    }),
+                    Forms\Components\Textarea::make('keteranganEssai.kolom_3')
+                    ->label(fn ($record) => match ($record?->config_id) {
+                        1, 4, 5 => 'Judul Penelitian',
+                        2 => 'Tempat Kegiatan',
+                        default => 'Detail 3',
+                    })
+                    ->disabled()
+                    ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
+                    ->columnSpanFull()
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->keteranganEssai?->kolom_3 ?? '-');
+                    }),
+                    Forms\Components\Textarea::make('keteranganEssai.kolom_4')
+                    ->label(fn ($record) => match ($record?->config_id) {
+                        1, 4, 5 => 'Link Jurnal',
+                        2 => 'Tanggal Kegiatan',
+                        default => 'Detail 4',
+                    })
+                    ->disabled()
+                    ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
+                    ->columnSpanFull()
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->keteranganEssai?->kolom_4 ?? '-');
+                    }),
+                    Forms\Components\Textarea::make('keteranganEssai.kolom_5')
+                    ->label(fn ($record) => match ($record?->config_id) {
+                        2 => 'Nama Kegiatan / Keterangan',
+                        default => 'Keterangan Tambahan',
+                    })
+                    ->disabled()
+                    ->visible(fn ($record) => in_array($record?->config_id, [2]))
+                    ->columnSpanFull()
+                    ->afterStateHydrated(function ($component, $record) {
+                        // Ambil nama dari relasi user
+                        $component->state($record->keteranganEssai?->kolom_5 ?? '-');
+                    }),
                 ])->columns(2),
 
             // 2. INPUT NOMOR SURAT (Tugas Utama OPS)
