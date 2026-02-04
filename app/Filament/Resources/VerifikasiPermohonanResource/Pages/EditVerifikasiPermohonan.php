@@ -64,5 +64,18 @@ class EditVerifikasiPermohonan extends EditRecord
 
         return $data;
     }
+    // Tambahkan method ini di dalam class EditVerifikasiPermohonan
+    protected function afterSave(): void
+    {
+        // Cek apakah OCS mengubah status menjadi 'Terverifikasi' (Lanjut ke Pimpinan)
+        if ($this->record->status_terakhir === 'Terverifikasi') {
+            \App\Models\LogPersetujuan::create([
+                'permohonan_id' => $this->record->id,
+                'pimpinan_id'   => auth()->id(), // ID si OCS
+                'status_aksi'   => 'Setuju',
+                'catatan'       => 'Administrasi lengkap. Diteruskan ke Pimpinan (Supervisor).',
+            ]);
+        }
+    }
 
 }

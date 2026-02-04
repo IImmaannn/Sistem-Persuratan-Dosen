@@ -163,7 +163,7 @@ class PenomoranSuratResource extends Resource
                     ->label('Beri Nomor')
                     ->icon('heroicon-o-pencil-square')
                     ->color('success'),
-                Tables\Actions\DeleteAction::make(),
+                // Tables\Actions\DeleteAction::make(),
 
             ])
             ->bulkActions([

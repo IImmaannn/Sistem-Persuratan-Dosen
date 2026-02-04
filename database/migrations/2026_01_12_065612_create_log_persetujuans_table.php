@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id(); // [cite: 82]
             $table->foreignId('permohonan_id')->constrained('permohonan_surats')->onDelete('cascade'); // [cite: 83]
             $table->foreignId('pimpinan_id')->constrained('users'); // FK ke pimpinan yang menyetujui [cite: 84]
-            $table->enum('status_aksi', ['Setuju', 'Pending', 'Revisi']); // [cite: 85]
+            $table->string('status_aksi');
             $table->text('catatan')->nullable(); // [cite: 94]
             $table->timestamps(); // Termasuk Timestamp [cite: 95]
         });

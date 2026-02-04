@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Notifications\Notification;
 
 class PersetujuanSuratResource extends Resource
 {
@@ -171,7 +172,7 @@ class PersetujuanSuratResource extends Resource
                 ->action(function (PermohonanSurat $record) {
                     $user = auth()->user();
                     
-                    // Tentukan status berikutnya berdasarkan siapa yang klik
+                    // 1. Tentukan status berikutnya
                     $nextStatus = match ($user->role) {
                         'Supervisor' => 'Disetujui_Supervisor',
                         'Manager' => 'Disetujui_Manager',
@@ -180,9 +181,22 @@ class PersetujuanSuratResource extends Resource
                         default => $record->status_terakhir,
                     };
 
+                    // 2. Simpan Log (Pastikan kolom-kolom ini sudah ada di $fillable model LogPersetujuan)
+                    \App\Models\LogPersetujuan::create([
+                        'permohonan_id' => $record->id,
+                        'pimpinan_id'   => $user->id,
+                        'status_aksi'   => $nextStatus, // Ini yang tadi bikin error SQL
+                        'catatan'       => 'Disetujui oleh ' . $user->role . ' untuk lanjut ke tahap berikutnya.',
+                    ]);
+
+                    // 3. Update status utama
                     $record->update(['status_terakhir' => $nextStatus]);
 
-                    // Tambahkan logika untuk isi tabel Log_Persetujuan di sini nanti
+                    // 4. Munculkan Notifikasi (Tadi error di sini karena belum import)
+                    Notification::make()
+                        ->title('Surat berhasil disetujui')
+                        ->success()
+                        ->send();
                 }),
             Tables\Actions\Action::make('tolak')
                 ->label('Tolak')
