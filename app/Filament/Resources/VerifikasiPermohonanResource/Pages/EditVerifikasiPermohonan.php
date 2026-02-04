@@ -37,5 +37,32 @@ class EditVerifikasiPermohonan extends EditRecord
 
         return $record;
     }
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Cek jika OCS memilih "Lanjut ke Pimpinan"
+        if ($data['status_terakhir'] === 'Terverifikasi') {
+            
+            // 1. Cari log terakhir di mana pimpinan melakukan penolakan (Revisi)
+            $lastReject = \App\Models\LogPersetujuan::where('permohonan_id', $this->record->id)
+                ->where('status_aksi', 'Revisi') // Sesuaikan dengan isi DB lo
+                ->latest()
+                ->first();
+
+            // 2. Jika ada jejak penolakan, kita "Tembak" langsung ke pimpinan tersebut
+            if ($lastReject) {
+                $pimpinan = \App\Models\User::find($lastReject->pimpinan_id);
+                
+                // Logika Loncat Antrean (Fast-Track)
+                $data['status_terakhir'] = match ($pimpinan->role) {
+                    'Manager' => 'Disetujui_Supervisor',   // Langsung ke meja Manager
+                    'Wakil_Dekan' => 'Disetujui_Manager',  // Langsung ke meja Wadek
+                    'Dekan' => 'Disetujui_Wakil_Dekan',    // Langsung ke meja Dekan
+                    default => 'Terverifikasi',            // Balik normal ke Supervisor
+                };
+            }
+        }
+
+        return $data;
+    }
 
 }

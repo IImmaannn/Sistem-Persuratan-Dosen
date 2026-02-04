@@ -109,7 +109,7 @@ class VerifikasiPermohonanResource extends Resource
                             ->label('Alasan Terakhir')
                             ->content(fn ($record) => 
                                 $record->logPersetujuans() // Pastikan ada relasi ini di model
-                                    ->where('status_aksi', 'Ditolak')
+                                    ->where('status_aksi', 'Revisi')
                                     ->latest()
                                     ->first()?->catatan ?? 'Belum ada catatan penolakan.'
                             )

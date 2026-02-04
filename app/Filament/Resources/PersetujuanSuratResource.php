@@ -199,7 +199,7 @@ class PersetujuanSuratResource extends Resource
                     \App\Models\LogPersetujuan::create([
                         'permohonan_id' => $record->id,
                         'pimpinan_id' => auth()->id(),
-                        'status_aksi' => 'Ditolak',
+                        'status_aksi' => 'Revisi',
                         'catatan' => $data['catatan'], // Ini alasan yang mau dilihat OCS
                         'timestamp' => now(),
                     ]);
