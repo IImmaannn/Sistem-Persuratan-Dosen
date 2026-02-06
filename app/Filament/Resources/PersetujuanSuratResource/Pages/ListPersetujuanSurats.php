@@ -10,10 +10,10 @@ class ListPersetujuanSurats extends ListRecords
 {
     protected static string $resource = PersetujuanSuratResource::class;
 
-    // protected function getHeaderActions(): array
-    // {
-    //     return [
-    //         Actions\CreateAction::make(),
-    //     ];
-    // }
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\StatsOverview::class,
+        ];
+    }
 }
