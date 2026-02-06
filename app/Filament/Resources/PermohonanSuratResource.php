@@ -44,7 +44,20 @@ class PermohonanSuratResource extends Resource
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
-                    
+                
+                Forms\Components\Group::make()
+                    ->relationship('keteranganEssai')
+                    ->schema([
+                        Forms\Components\Repeater::make('anggota_tim')
+                        ->label('Data Dosen Anggota')
+                        ->schema([
+                            Forms\Components\TextInput::make('nama')->required(),
+                            Forms\Components\TextInput::make('nip')->required(),
+                        ])
+                        ->columns(2)
+                        ->addActionLabel('Tambah Dosen Lain')
+                        ->minItems(1),
+                    ])->columnSpanFull(),                  
                 // 2. DETAIL PERMOHONAN
                 Forms\Components\Section::make('Detail Permohonan')
                     ->schema([

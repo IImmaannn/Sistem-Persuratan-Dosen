@@ -17,6 +17,7 @@ return new class extends Migration
             for ($i = 1; $i <= 7; $i++) {
                 $table->text("kolom_$i")->nullable();
             }
+            $table->json('anggota_tim')->nullable();
             $table->timestamps();
         });
     }

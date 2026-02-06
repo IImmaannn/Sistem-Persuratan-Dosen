@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class KeteranganEssai extends Model
 {
@@ -18,7 +19,11 @@ class KeteranganEssai extends Model
         'kolom_4', 
         'kolom_5', 
         'kolom_6', 
-        'kolom_7'
+        'kolom_7',
+        'anggota_tim'
+    ];
+    protected $casts = [
+        'anggota_tim' => 'array',
     ];
 
     /**
