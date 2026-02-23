@@ -46,6 +46,19 @@ class VerifikasiPermohonanResource extends Resource
                             $component->state($record->user?->profile?->nip ?? '-');
                         }),
                     ])->columns(2),
+                    Forms\Components\Group::make()
+                    ->relationship('keteranganEssai')
+                    ->schema([
+                        Forms\Components\Repeater::make('anggota_tim')
+                        ->label('Data Dosen Anggota')
+                        ->schema([
+                            Forms\Components\TextInput::make('nama')->required(),
+                            Forms\Components\TextInput::make('nip')->required(),
+                        ])
+                        ->columns(2)
+                        ->addActionLabel('Tambah Dosen Lain')
+                        ->minItems(1),
+                    ])->columnSpanFull(),                  
 
                 // 2. VERIFIKASI DETAIL ESAI (Konteks Tetap di PermohonanSurat)
                 Forms\Components\Section::make('Verifikasi Detail Esai')

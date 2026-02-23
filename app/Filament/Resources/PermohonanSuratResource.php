@@ -176,11 +176,25 @@ class PermohonanSuratResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Draft' => 'gray',
-                        'Proses Verifikasi' => 'warning',
-                        'Selesai' => 'success',
-                        'Ditolak' => 'danger',
+                        'Menunggu Verifikasi OCS' => 'warning',
+                        'Revisi OCS' => 'danger',
+                        'Terverifikasi', 'Disetujui Supervisor', 'Disetujui Manager', 'Disetujui Wakil Dekan' => 'gray',
+                        'Selesai_Pimpinan', 'Surat_Terbit' => 'success',
                         default => 'secondary',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'Draft' => 'Draf (Belum Dikirim)',
+                        'Menunggu Verifikasi OCS' => 'Sedang Diverifikasi OCS',
+                        'Revisi OCS' => 'Perlu Revisi (Cek Catatan)',
+                        'Terverifikasi' => 'Proses di Supervisor',
+                        'Disetujui Supervisor' => 'Proses di Manager',
+                        'Disetujui Manager' => 'Proses di Wakil Dekan',
+                        'Disetujui Wakil Dekan' => 'Proses di Dekan',
+                        'Selesai Pimpinan' => 'Menunggu Penomoran Surat',
+                        'Surat Terbit' => 'Selesai (Siap Download)',
+                        default => $state,
                     }),
+                    
             ])
             ->actions([
             Tables\Actions\EditAction::make('verifikasi')

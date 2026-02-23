@@ -18,6 +18,7 @@ use Filament\Notifications\Notification;
 class PersetujuanSuratResource extends Resource
 {
     protected static ?string $model = PermohonanSurat::class;
+    protected static ?string $navigationLabel = 'Dashboard';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -45,6 +46,21 @@ class PersetujuanSuratResource extends Resource
                             $component->state($record->user?->profile?->nip ?? '-');
                         }),
                     ])->columns(2),
+
+                    Forms\Components\Group::make()
+                    ->relationship('keteranganEssai')
+                    ->schema([
+                        Forms\Components\Repeater::make('anggota_tim')
+                        ->label('Data Dosen Anggota')
+                        ->schema([
+                            Forms\Components\TextInput::make('nama')->required(),
+                            Forms\Components\TextInput::make('nip')->required(),
+                        ])
+                        ->columns(2)
+                        ->addActionLabel('Tambah Dosen Lain')
+                        ->minItems(1)
+                        ->disabled(),
+                    ])->columnSpanFull(),                  
 
                 // 2. VERIFIKASI DETAIL ESAI (Konteks Tetap di PermohonanSurat)
                 Forms\Components\Section::make('Verifikasi Detail Esai')
@@ -108,23 +124,23 @@ class PersetujuanSuratResource extends Resource
                     ]),
 
                 // 3. TINDAKAN OPERATOR
-                Forms\Components\Section::make('Tindakan Pimpinan')
-                    ->schema([
-                        Forms\Components\Select::make('status_terakhir')
-                            ->label('Keputusan Persetujuan')
-                            ->options(function () {
-                                $role = auth()->user()->role;
-                                return match ($role) {
-                                    'Supervisor' => ['Disetujui_Supervisor' => 'Setujui (Kirim ke Manager)', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
-                                    'Manager' => ['Disetujui_Manager' => 'Setujui (Kirim ke Wadek)', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
-                                    'Wakil_Dekan' => ['Disetujui_Wakil_Dekan' => 'Setujui (Kirim ke Dekan)', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
-                                    'Dekan' => ['Selesai_Pimpinan' => 'Setujui Akhir', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
-                                    default => [],
-                                };
-                            })
-                            ->required()
-                            ->native(false),
-                    ])
+                // Forms\Components\Section::make('Tindakan Pimpinan')
+                //     ->schema([
+                //         Forms\Components\Select::make('status_terakhir')
+                //             ->label('Keputusan Persetujuan')
+                //             ->options(function () {
+                //                 $role = auth()->user()->role;
+                //                 return match ($role) {
+                //                     'Supervisor' => ['Disetujui_Supervisor' => 'Setujui (Kirim ke Manager)', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
+                //                     'Manager' => ['Disetujui_Manager' => 'Setujui (Kirim ke Wadek)', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
+                //                     'Wakil_Dekan' => ['Disetujui_Wakil_Dekan' => 'Setujui (Kirim ke Dekan)', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
+                //                     'Dekan' => ['Selesai_Pimpinan' => 'Setujui Akhir', 'Revisi OCS' => 'Tolak (Kembalikan ke OCS)'],
+                //                     default => [],
+                //                 };
+                //             })
+                //             ->required()
+                //             ->native(false),
+                //     ])
                 //
             ]);
     }

@@ -18,7 +18,7 @@ class StatusPermohonanWidget extends BaseWidget
             ->query(
                 PermohonanSurat::query()
                     ->where('user_id', auth()->id())
-                    ->whereIn('status_terakhir', ['Draft', 'Proses Verifikasi']) // Surat aktif [cite: 75]
+                    // ->whereIn('status_terakhir', ['Draft', 'Proses Verifikasi']) // Surat aktif [cite: 75]
                     ->latest()
             )
             ->columns([
@@ -33,10 +33,21 @@ class StatusPermohonanWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('status_terakhir')
                     ->label('Status') // 
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'Draft' => 'Draft',
+                        'Terverifikasi' => 'Sedang di Supervisor',
+                        // INI KUNCINYA: Map data 'Disetujui_Supervisor' ke teks yang lo mau
+                        'Disetujui_Supervisor' => 'Disetujui Supervisor', 
+                        'Disetujui_Manager' => 'Disetujui Manager',
+                        'Disetujui_Wakil_Dekan' => 'Disetujui Wakil Dekan',
+                        'Selesai_Pimpinan' => 'Proses Penomoran',
+                        'Surat_Terbit' => 'Selesai',
+                        default => str_replace('_', ' ', $state),
+                    })
                     ->color(fn (string $state): string => match ($state) {
                         'Draft' => 'gray',
                         'Proses Verifikasi' => 'warning',
-                        default => 'secondary',
+                        default => 'info',
                     }),
             ]);
     }

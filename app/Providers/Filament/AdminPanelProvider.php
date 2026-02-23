@@ -67,6 +67,7 @@ class AdminPanelProvider extends PanelProvider
                 // Titik tiga (...) itu namanya spread operator, gunanya buat nambahin 
                 // Dashboard ke dalam list HANYA JIKA role-nya BUKAN Operator_Surat [cite: 1, 3]
                 ...(auth()->user()?->role !== 'Operator_Surat' ? [Pages\Dashboard::class] : []),
+                ...(auth()->user()?->role !== 'Manager' ? [Pages\Dashboard::class] : []),
             ])
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())

@@ -10,6 +10,10 @@ class EditPermohonanSurat extends EditRecord
 {
     protected static string $resource = PermohonanSuratResource::class;
 
+    public function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
     protected function getHeaderActions(): array
     {
         return [
@@ -17,8 +21,4 @@ class EditPermohonanSurat extends EditRecord
     }
 
     //customize redirect after create
-    public function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
 }

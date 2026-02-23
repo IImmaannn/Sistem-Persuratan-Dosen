@@ -16,4 +16,10 @@ class ListVerifikasiPermohonans extends ListRecords
             // Actions\CreateAction::make(),
         ];
     }
+    protected function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Widgets\RejectedRequestsTable::class,
+        ];
+    }
 }

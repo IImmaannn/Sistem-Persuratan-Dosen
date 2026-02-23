@@ -40,6 +40,9 @@ class PermohonanSurat extends Model
         // Gunakan 'permohonan_id' sesuai yang terlihat di error SQL lo sebelumnya
         return $this->hasMany(LogPersetujuan::class, 'permohonan_id');
     }
+    public function latestLog() {
+        return $this->hasOne(LogPersetujuan::class, 'permohonan_id')->latestOfMany();
+    }
 
 
 

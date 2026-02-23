@@ -8,6 +8,21 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class StatsOverview extends BaseWidget
 {
+    public static function canView(): bool
+    {
+        $user = auth()->user();
+
+        // Widget HANYA muncul jika role BUKAN 'Dosen'
+        // Atau lo bisa sebutkan role yang BOLEH melihatnya saja
+        return in_array($user->role, [
+            'Supervisor', 
+            'Manager', 
+            'Wakil_Dekan', 
+            'Dekan', 
+            'Operator_Surat',
+            'Operator_Nomor'  // Tambahkan role OCS/Operator lo di sini
+        ]);
+    }
     protected function getStats(): array
     {
         $user = auth()->user();
