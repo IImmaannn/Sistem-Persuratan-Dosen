@@ -57,17 +57,21 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('')
+            ->login()
+            ->brandName('Form')
             ->homeUrl(fn () => match (auth()->user()?->role) {
+                'Admin' => \App\Filament\Resources\UserResource::getUrl(),
                 'Supervisor', 'Manager', 'Wakil_Dekan', 'Dekan' => \App\Filament\Resources\PersetujuanSuratResource::getUrl(),
                 'Operator_Surat' => \App\Filament\Resources\VerifikasiPermohonanResource::getUrl(),
                 'Dosen' => '/', // Atau halaman spesifik dosen
                 default => '/',
             })
              ->pages([
-                // Titik tiga (...) itu namanya spread operator, gunanya buat nambahin 
-                // Dashboard ke dalam list HANYA JIKA role-nya BUKAN Operator_Surat [cite: 1, 3]
-                ...(auth()->user()?->role !== 'Operator_Surat' ? [Pages\Dashboard::class] : []),
-                ...(auth()->user()?->role !== 'Manager' ? [Pages\Dashboard::class] : []),
+                // // Titik tiga (...) itu namanya spread operator, gunanya buat nambahin 
+                // // Dashboard ke dalam list HANYA JIKA role-nya BUKAN Operator_Surat [cite: 1, 3]
+                // ...(auth()->user()?->role !== 'Operator_Surat' ? [Pages\Dashboard::class] : []),
+                // ...(auth()->user()?->role !== 'Manager' ? [Pages\Dashboard::class] : []),
+                // ...(auth()->user()?->role !== 'Admin' ? [Pages\Dashboard::class] : []),
             ])
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
@@ -82,9 +86,14 @@ class AdminPanelProvider extends PanelProvider
             //     Pages\Dashboard::class,
             // ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
+            ->authGuard('web')
+            ->databaseNotifications()
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                ...(auth()->user()?->role !== 'Admin' ? [Widgets\AccountWidget::class] : []),
+                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

@@ -47,4 +47,11 @@ class RejectedRequestsTable extends BaseWidget
                     ->color('warning'),
             ]);
     }
+    public static function canView(): bool
+    {
+        // Widget ini HANYA boleh dilihat oleh OCS
+        // Dan TIDAK AKAN muncul untuk Admin, Dosen, atau Pimpinan
+        return auth()->user()->role === 'OCS'; 
+    }
+
 }

@@ -27,25 +27,34 @@ use Filament\Infolists\Components\Section as InfolistSection;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationLabel = 'Home';
+    protected static ?string $navigationIcon = 'heroicon-o-home';
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make(
-                    'User Information'
-                )->schema([
-                            TextInput::make('name')
-                                ->required(),
-                            TextInput::make('email')
-                                ->required(),
-                            TextInput::make('password')
-                                ->required(),
-                        ]),
+                Section::make('User Information')->schema([
+                    TextInput::make('name')->required(),
+                    TextInput::make('email')->required()->email(),
+                    TextInput::make('password')
+                        ->password()
+                        ->required(fn ($context) => $context === 'create')
+                        ->dehydrated(fn ($state) => filled($state)),
+                    
+                    // TAMBAHAN: Input Gender
+                    Select::make('gender')
+                        ->label('Gender')
+                        ->options([
+                            'Laki-laki' => 'Laki-laki',
+                            'Perempuan' => 'Perempuan',
+                        ])
+                        ->relationship('profile', 'gender') // Simpan ke tabel profile
+                        ->required(),
+                ])->columns(2),
             ]);
-    }
+}
 
     public static function canCreate(): bool
     {
@@ -54,31 +63,35 @@ class UserResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+       return $table
             ->columns([
-                Tables\Columns\Layout\Split::make([
-                    Tables\Columns\ImageColumn::make('avatar_url')
-                        ->searchable()
-                        ->circular()
-                        ->grow(false)
-                        ->getStateUsing(fn($record) => $record->avatar_url
-                            ? $record->avatar_url
-                            : "https://ui-avatars.com/api/?name=" . urlencode($record->name)),
-                    Tables\Columns\TextColumn::make('name')
-                        ->searchable()
-                        ->weight(FontWeight::Bold),
-                    Tables\Columns\Layout\Stack::make([
-                        Tables\Columns\TextColumn::make('roles.name')
-                            ->searchable()
-                            ->icon('heroicon-o-shield-check')
-                            ->grow(false),
-                        Tables\Columns\TextColumn::make('email')
-                            ->icon('heroicon-m-envelope')
-                            ->searchable()
-                            ->grow(false),
-                    ])->alignStart()->visibleFrom('lg')->space(1)
-                ]),
-            ])
+                // Kolom Nama (Munculin bar search otomatis)
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nama')
+                    ->searchable() // Agar bar Search di wireframe lo aktif
+                    ->sortable(),
+
+                // Kolom Gender (Ambil dari relasi profile)
+                Tables\Columns\TextColumn::make('profile.gender')
+                    ->label('Gender')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Laki-laki' => 'info',
+                        'Perempuan' => 'danger',
+                        default => 'gray',
+                    }),
+
+                // Kolom Email
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
+                    ->copyable(),
+
+                // Kolom Role (Pembeda antar aktor)
+                Tables\Columns\TextColumn::make('roles.name')
+                    ->label('Role')
+                    ->badge()
+                    ->color('success'),
+            ]) 
             ->filters([
                 //
                 SelectFilter::make('roles')
