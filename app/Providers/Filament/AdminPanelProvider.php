@@ -71,7 +71,7 @@ class AdminPanelProvider extends PanelProvider
                 // // Dashboard ke dalam list HANYA JIKA role-nya BUKAN Operator_Surat [cite: 1, 3]
                 // ...(auth()->user()?->role !== 'Operator_Surat' ? [Pages\Dashboard::class] : []),
                 // ...(auth()->user()?->role !== 'Manager' ? [Pages\Dashboard::class] : []),
-                // ...(auth()->user()?->role !== 'Admin' ? [Pages\Dashboard::class] : []),
+                ...(auth()->user()?->role !== 'Admin' ? [Pages\Dashboard::class] : []),
             ])
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
