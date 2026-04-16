@@ -55,4 +55,9 @@ class HistoryPermohonanWidget extends BaseWidget
                 ->limit(100),
          ]);
     }
+    public static function canView(): bool
+    {
+        // Widget ini HANYA boleh dilihat oleh Dosen
+        return auth()->user()->role === 'Dosen'; 
+    }
 }

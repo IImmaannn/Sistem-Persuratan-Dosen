@@ -6,6 +6,9 @@ use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Login;
 use App\Models\User;
 use App\Settings\KaidoSetting;
+use App\Filament\Resources\UserResource;
+use App\Filament\Resources\PersetujuanSuratResource;
+use App\Filament\Resources\VerifikasiPermohonanResource;
 use Filament\Http\Middleware\Authenticate;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use DutchCodingCompany\FilamentSocialite\FilamentSocialitePlugin;
@@ -29,19 +32,14 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Rupadana\ApiService\ApiServicePlugin;
-
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Support\Facades\Schema;
 
 class AdminPanelProvider extends PanelProvider
 {
     private ?KaidoSetting $settings = null;
-    //constructor
+
     public function __construct()
     {
-        //this is feels bad but this is the solution that i can think for now :D
-        // Check if settings table exists first
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
                 $this->settings = app(KaidoSetting::class);
@@ -59,41 +57,29 @@ class AdminPanelProvider extends PanelProvider
             ->path('')
             ->login()
             ->brandName('Form')
+            // REDIRECTION UTAMA: Admin langsung ke UserResource
             ->homeUrl(fn () => match (auth()->user()?->role) {
-                'Admin' => \App\Filament\Resources\UserResource::getUrl(),
-                'Supervisor', 'Manager', 'Wakil_Dekan', 'Dekan' => \App\Filament\Resources\PersetujuanSuratResource::getUrl(),
-                'Operator_Surat' => \App\Filament\Resources\VerifikasiPermohonanResource::getUrl(),
-                'Dosen' => '/', // Atau halaman spesifik dosen
+                'Admin' => UserResource::getUrl(),
+                'Supervisor', 'Manager', 'Wakil_Dekan', 'Dekan' => PersetujuanSuratResource::getUrl(),
+                'Operator_Surat' => VerifikasiPermohonanResource::getUrl(),
                 default => '/',
             })
-             ->pages([
-                // // Titik tiga (...) itu namanya spread operator, gunanya buat nambahin 
-                // // Dashboard ke dalam list HANYA JIKA role-nya BUKAN Operator_Surat [cite: 1, 3]
-                // ...(auth()->user()?->role !== 'Operator_Surat' ? [Pages\Dashboard::class] : []),
-                // ...(auth()->user()?->role !== 'Manager' ? [Pages\Dashboard::class] : []),
-                ...(auth()->user()?->role !== 'Admin' ? [Pages\Dashboard::class] : []),
+            ->pages([
+                Dashboard::class, 
             ])
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
-            ->when($this->settings->registration_enabled ?? true, fn($panel) => $panel->registration())
-            ->when($this->settings->password_reset_enabled ?? true, fn($panel) => $panel->passwordReset())
             ->emailVerification()
             ->colors([
                 'primary' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            // ->pages([
-            //     Pages\Dashboard::class,
-            // ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->authGuard('web')
             ->databaseNotifications()
             ->widgets([
                 Widgets\AccountWidget::class,
                 ...(auth()->user()?->role !== 'Admin' ? [Widgets\AccountWidget::class] : []),
-                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -105,18 +91,12 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                SetTheme::class,
             ])
-            ->sidebarCollapsibleOnDesktop(true)
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->middleware([
-                SetTheme::class
-            ])
-            ->plugins(
-                $this->getPlugins()
-            )
-            ->databaseNotifications();  
+            ->plugins($this->getPlugins());
     }
 
     private function getPlugins(): array
@@ -127,43 +107,27 @@ class AdminPanelProvider extends PanelProvider
             ApiServicePlugin::make(),
             BreezyCore::make()
                 ->myProfile(
-                    shouldRegisterUserMenu: true, // Sets the 'account' link in the panel User Menu (default = true)
-                    shouldRegisterNavigation: true, // Adds a main navigation item for the My Profile page (default = false)
-                    navigationGroup: 'Settings', // Sets the navigation group for the My Profile page (default = null)
-                    hasAvatars: true, // Enables the avatar upload form component (default = false)
+                    shouldRegisterUserMenu: true,
+                    shouldRegisterNavigation: true,
+                    navigationGroup: 'Settings',
+                    hasAvatars: true,
                     slug: 'my-profile'
                 )
-                ->avatarUploadComponent(fn($fileUpload) => $fileUpload->disableLabel())
-                // OR, replace with your own component
-                ->avatarUploadComponent(
-                    fn() => FileUpload::make('avatar_url')
-                        ->image()
-                        ->disk('public')
-                )
+                ->avatarUploadComponent(fn() => FileUpload::make('avatar_url')->image()->disk('public'))
                 ->enableTwoFactorAuthentication(),
         ];
 
         if ($this->settings->sso_enabled ?? true) {
-            $plugins[] =
-                FilamentSocialitePlugin::make()
+            $plugins[] = FilamentSocialitePlugin::make()
                 ->providers([
-                    Provider::make('google')
-                        ->label('Google')
-                        ->icon('fab-google')
-                        ->color(Color::hex('#2f2a6b'))
-                        ->outlined(true)
-                        ->stateless(false)
-                ])->registration(true)
-                ->createUserUsing(function (string $provider, SocialiteUserContract $oauthUser, FilamentSocialitePlugin $plugin) {
-                    $user = User::firstOrNew([
-                        'email' => $oauthUser->getEmail(),
-                    ]);
-                    $user->name = $oauthUser->getName();
-                    $user->email = $oauthUser->getEmail();
-                    $user->email_verified_at = now();
-                    $user->save();
-
-                    return $user;
+                    Provider::make('google')->label('Google')->icon('fab-google')->color(Color::hex('#2f2a6b'))->outlined(true)
+                ])
+                ->registration(true)
+                ->createUserUsing(function ($provider, $oauthUser) {
+                    return User::updateOrCreate(
+                        ['email' => $oauthUser->getEmail()],
+                        ['name' => $oauthUser->getName(), 'email_verified_at' => now()]
+                    );
                 });
         }
         return $plugins;

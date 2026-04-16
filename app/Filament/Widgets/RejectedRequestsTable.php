@@ -51,7 +51,7 @@ class RejectedRequestsTable extends BaseWidget
     {
         // Widget ini HANYA boleh dilihat oleh OCS
         // Dan TIDAK AKAN muncul untuk Admin, Dosen, atau Pimpinan
-        return auth()->user()->role === 'OCS'; 
+        return auth()->user()->role === 'Operator_Surat'; 
     }
 
 }

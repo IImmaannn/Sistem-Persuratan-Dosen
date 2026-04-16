@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
         Schema::create('log_persetujuans', function (Blueprint $table) {
             $table->id(); // [cite: 82]
             $table->foreignId('permohonan_id')->constrained('permohonan_surats')->onDelete('cascade'); // [cite: 83]
