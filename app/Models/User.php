@@ -15,12 +15,14 @@ use Illuminate\Support\Facades\Storage;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\MediaLibrary\HasMedia; // TAMBAHKAN INI
+use Spatie\MediaLibrary\InteractsWithMedia; // TAMBAHKAN INI
 
-class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerifyEmail, HasMedia
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable, HasApiTokens;
-
+    use HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable, HasApiTokens, InteractsWithMedia;
+    
     /**
      * The attributes that are mass assignable.
      *

@@ -13,6 +13,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-shield": "^3.3",
         "dedoc/scramble": "^0.12.10",
         "dutchcodingcompany/filament-socialite": "^2.3",
@@ -24,7 +25,9 @@
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "mpdf/mpdf": "^8.3",
         "owenvoke/blade-fontawesome": "^2.8",
+        "phpoffice/phpword": "^1.4",
         "pxlrbt/filament-excel": "^2.3",
         "resend/resend-laravel": "^0.16.1",
         "rupadana/filament-api-service": "^3.4.4",
@@ -95,6 +98,10 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "audit": 
+        { 
+            "block-insecure": false 
         }
     },
     "minimum-stability": "stable",

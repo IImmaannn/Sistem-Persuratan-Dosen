@@ -4,15 +4,20 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\VerifikasiPermohonanResource\Pages;
 use App\Models\PermohonanSurat;
-use App\Filament\Resources\VerifikasiPermohonanResource\RelationManagers;
-use App\Models\VerifikasiPermohonan;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Grid;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class VerifikasiPermohonanResource extends Resource
 {
@@ -21,107 +26,134 @@ class VerifikasiPermohonanResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $slug = 'dashboard-operator';
 
+    // === 1. SKEMA HALAMAN EDIT PENUH ===
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                // 1. INFORMASI PENGAJU (Read-Only)
-                Forms\Components\Section::make('Informasi Pengaju')
+                // INFORMASI PENGAJU (Read-Only)
+                Section::make('Informasi Pengaju')
                     ->schema([
-                        Forms\Components\TextInput::make('user.name')
-                        ->label('Nama Dosen')
-                        ->disabled()
-                        ->dehydrated(false) // Gak usah disimpen, cuma tampil
-                        ->afterStateHydrated(function ($component, $record) {
-                            // Ambil nama dari relasi user
-                            $component->state($record->user?->name ?? '-');
-                        }), 
-                        Forms\Components\TextInput::make('user.profile.nip')
-                        ->label('NIP')
-                        ->disabled()
-                        ->dehydrated(false)
-                        ->afterStateHydrated(function ($component, $record) {
-                            // Ambil NIP dari relasi user -> profile
-                            // Pastikan model User lo punya relasi 'profile' ya!
-                            $component->state($record->user?->profile?->nip ?? '-');
-                        }),
+                        TextInput::make('user.name')
+                            ->label('Nama Dosen')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->user?->name ?? '-');
+                            }), 
+                        TextInput::make('user.profile.nip')
+                            ->label('NIP')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->user?->profile?->nip ?? '-');
+                            }),
                     ])->columns(2),
-                    Forms\Components\Group::make()
+
+                // GERBANG UTAMA RELASI (Bisa diedit OCS & Auto-Save)
+                Group::make()
                     ->relationship('keteranganEssai')
                     ->schema([
-                        Forms\Components\Repeater::make('anggota_tim')
-                        ->label('Data Dosen Anggota')
-                        ->schema([
-                            Forms\Components\TextInput::make('nama')->required(),
-                            Forms\Components\TextInput::make('nip')->required(),
-                        ])
-                        ->columns(2)
-                        ->addActionLabel('Tambah Dosen Lain')
-                        ->minItems(1),
-                    ])->columnSpanFull(),                  
+                        
+                        // REPEATER DOSEN ANGGOTA (Dropdown + Email - Bisa Diedit OCS)
+                        Section::make('Data Dosen Anggota')
+                            ->schema([
+                                Forms\Components\Repeater::make('anggota_tim')
+                                    ->label('Daftar Anggota')
+                                    ->schema([
+                                        Select::make('user_id')
+                                            ->label('Nama Dosen Anggota')
+                                            ->placeholder('Pilih Nama Dosen...')
+                                            ->options(User::where('role', 'Dosen')->get()->mapWithKeys(fn ($user) => [
+                                                $user->id => "{$user->name} ({$user->email})"
+                                            ]))
+                                            ->searchable()
+                                            ->reactive()
+                                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                                $user = User::with('profile')->find($state);
+                                                if ($user) {
+                                                    $set('email', $user->email);
+                                                    $set('nama', $user->name);
+                                                    $set('nip', $user->profile?->nip ?? '-');
+                                                    $set('pangkat', $user->profile?->golongan ?? '-');
+                                                }
+                                            }),
+                                            // ->required(),
 
-                // 2. VERIFIKASI DETAIL ESAI (Konteks Tetap di PermohonanSurat)
-                Forms\Components\Section::make('Verifikasi Detail Esai')
-                    ->description('Label dan kolom muncul otomatis sesuai jenis surat') 
-                    ->schema([
-                        // KOLOM 1: Nama Jurnal / Kegiatan
-                        // Gunakan dot notation 'keteranganEssai.kolom_1'
-                        Forms\Components\TextInput::make('keteranganEssai.kolom_1')
-                            ->label(fn ($record) => match ($record?->config_id) {
-                                1, 4 ,5 => 'Nama Jurnal',
-                                2, 3 => 'Nama Kegiatan',
-                                default => 'Detail 1',
-                            }) 
-                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_1)),
+                                        TextInput::make('email')
+                                            ->label('Email')
+                                            ->readonly(),
+                                            // ->required(),
 
-                        // KOLOM 2: e-ISSN / Penyelenggara / Tanggal
-                        Forms\Components\TextInput::make('keteranganEssai.kolom_2')
-                            ->label(fn ($record) => match ($record?->config_id) {
-                                1, 4, 5=> 'e-ISSN',
-                                2 => 'Penyelenggara',
-                                3 => 'Tanggal Kegiatan', // Sesuai isian dosen
-                                default => 'Detail 2',
-                            })
-                            // Sekarang visible() akan bekerja karena bisa baca config_id
-                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 3, 4, 5]))
-                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_2)),
+                                        Hidden::make('nama'),
+                                        Hidden::make('nip'),
+                                        Hidden::make('pangkat'),
+                                    ])
+                                    ->columns(2)
+                                    ->addActionLabel('Tambah Dosen Lain')
+                                    ->minItems(0),
+                            ]),
 
-                        // KOLOM 3: Judul / Tempat
-                        Forms\Components\TextInput::make('keteranganEssai.kolom_3')
-                            ->label(fn ($record) => match ($record?->config_id) {
-                                1, 4, 5 => 'Judul Penelitian',
-                                2 => 'Tempat Kegiatan',
-                                default => 'Detail 3',
-                            })
-                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
-                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_3)),
+                        // VERIFIKASI DETAIL ESAI (Bisa Diedit OCS)
+                        Section::make('Verifikasi Detail Esai')
+                            ->description('Label dan kolom muncul otomatis sesuai jenis surat') 
+                            ->schema([
+                                TextInput::make('kolom_1')
+                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                        1, 4 ,5 => 'Nama Jurnal',
+                                        2, 3 => 'Nama Kegiatan',
+                                        default => 'Detail 1',
+                                    }) 
+                                    ->required()
+                                    ->columnSpanFull(),
 
-                        Forms\Components\TextInput::make('keteranganEssai.kolom_4')
-                            ->label(fn ($record) => match ($record?->config_id) {
-                                1, 4, 5 => 'Link Jurnal',
-                                2 => 'Tanggal Kegiatan',
-                                default => 'Detail 4',
-                            })
-                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
-                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_4)),
+                                TextInput::make('kolom_2')
+                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                        1, 4, 5=> 'e-ISSN',
+                                        2 => 'Penyelenggara',
+                                        3 => 'Tanggal Kegiatan',
+                                        default => 'Detail 2',
+                                    })
+                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [1, 2, 3, 4, 5]))
+                                    ->required()
+                                    ->columnSpanFull(),
 
-                        // KOLOM 5: Keterangan / Nama Kegiatan Penunjang
-                        Forms\Components\Textarea::make('keteranganEssai.kolom_5')
-                            ->label(fn ($record) => match ($record?->config_id) {
-                                2 => 'Nama Kegiatan / Keterangan',
-                                default => 'Keterangan Tambahan',
-                            })
-                            ->visible(fn ($record) => in_array($record?->config_id, [2]))
-                            ->columnSpanFull()
-                            ->afterStateHydrated(fn ($component, $record) => $component->state($record->keteranganEssai?->kolom_5))
-                    ]),
-                Forms\Components\Section::make('Catatan Penolakan Pimpinan')
+                                TextInput::make('kolom_3')
+                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                        1, 4, 5 => 'Judul Penelitian',
+                                        2 => 'Tempat Kegiatan',
+                                        default => 'Detail 3',
+                                    })
+                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [1, 2, 4, 5]))
+                                    ->columnSpanFull(),
+
+                                TextInput::make('kolom_4')
+                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                        1, 4, 5 => 'Link Jurnal',
+                                        2 => 'Tanggal Kegiatan',
+                                        default => 'Detail 4',
+                                    })
+                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [1, 2, 4, 5]))
+                                    ->columnSpanFull(),
+
+                                Textarea::make('kolom_5')
+                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                        2 => 'Nama Kegiatan / Keterangan',
+                                        default => 'Keterangan Tambahan',
+                                    })
+                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [2]))
+                                    ->columnSpanFull()
+                            ])->columns(2),
+                    ])->columnSpanFull(),
+
+                // CATATAN REVISI PIMPINAN
+                Section::make('Catatan Penolakan Pimpinan')
                     ->description('Alasan mengapa pimpinan menolak permohonan ini sebelumnya.')
                     ->schema([
                         Forms\Components\Placeholder::make('alasan_terakhir')
                             ->label('Alasan Terakhir')
                             ->content(fn ($record) => 
-                                $record->logPersetujuans() // Pastikan ada relasi ini di model
+                                $record->logPersetujuans() 
                                     ->where('status_aksi', 'Revisi')
                                     ->latest()
                                     ->first()?->catatan ?? 'Belum ada catatan penolakan.'
@@ -129,82 +161,35 @@ class VerifikasiPermohonanResource extends Resource
                     ])
                     ->collapsible()
                     ->visible(fn ($record) => $record->status_terakhir === 'Revisi OCS'),
-
-                // 3. TINDAKAN OPERATOR
-                Forms\Components\Section::make('Tindakan Operator')
-                    ->schema([
-                        Forms\Components\Select::make('status_terakhir')
-                            ->label('Status Verifikasi Administrasi')
-                            ->options([
-                                'Proses Verifikasi' => 'Proses Verifikasi',
-                                // 'Revisi' => 'Perlu Revisi',
-                                'Terverifikasi' => 'Lanjut ke Pimpinan',
-                            ])
-                            ->required()
-                            ->native(false),
-                    ])
-                
             ]);
     }
 
-   public static function table(Table $table): Table
+    // === 2. SKEMA TABEL LIST DASHBOARD ===
+    public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                // 1. TANGGAL [cite: 262]
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Tanggal')
-                    ->dateTime('d/m/Y')
-                    ->sortable(),
-
-
-                // 2. NAMA (Dari Relasi User) [cite: 263]
-                Tables\Columns\TextColumn::make('user.name')
-                    ->label('Nama')
-                    ->searchable(),
-                    // ->preload(false),
-
-                // 3. NIP (Dari Relasi Profile Dosen melalui User) [cite: 264]
-                Tables\Columns\TextColumn::make('user.profile.nip')
-                    ->label('NIP')
-                    ->copyable(),
-
-                // 4. PERIHAL (Kategori Surat) [cite: 265]
-                Tables\Columns\TextColumn::make('config.value')
-                    ->label('Perihal'),
-
-                // 5. KETERANGAN (Cuplikan isi esai kolom 1) [cite: 269]
-                Tables\Columns\TextColumn::make('keteranganEssai.kolom_1')
-                    ->label('Keterangan')
-                    ->limit(30)
-                    ->placeholder('Tidak ada detail'),
-            ])
-            ->filters([
-                // FILTER PRIHAL sesuai wireframe [cite: 261]
-                Tables\Filters\SelectFilter::make('config_id')
-                    ->label('Prihal')
-                    ->relationship('config', 'value', fn ($query) => 
-                        $query->where('kategori', 'jenis_penelitian')
-                            ->orWhere('key', 'penunjang')
-                            ->orWhere('key', 'narasumber')
-                    ),
+                Tables\Columns\TextColumn::make('user.name')->label('Dosen Pengaju')->searchable(),
+                Tables\Columns\TextColumn::make('config.value')->label('Perihal'),
+                Tables\Columns\TextColumn::make('status_terakhir')
+                    ->label('Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Draft' => 'gray',
+                        'Menunggu Verifikasi OCS' => 'warning',
+                        'Selesai_Pimpinan', 'Surat_Terbit' => 'success',
+                        default => 'info',
+                    }),
             ])
             ->actions([
-                // Operator bisa mengedit untuk verifikasi/revisi esai [cite: 8]
-                Tables\Actions\EditAction::make()->label('Verifikasi'),
+                Tables\Actions\EditAction::make()->label('Detail')->icon('heroicon-o-check-badge'),
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
+    public static function getRelations(): array { return []; }
 
     public static function canViewAny(): bool
     {
-        // Hanya user dengan role 'Operator_Surat' yang bisa lihat halaman ini [cite: 60, 24]
         return auth()->user()->role === 'Operator_Surat';
     }
 
@@ -216,6 +201,7 @@ class VerifikasiPermohonanResource extends Resource
             'edit' => Pages\EditVerifikasiPermohonan::route('/{record}/edit'),
         ];
     }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

@@ -5,8 +5,15 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PenomoranSuratResource\Pages;
 use App\Filament\Resources\PenomoranSuratResource\RelationManagers;
 use App\Models\PermohonanSurat;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Hidden;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -24,126 +31,131 @@ class PenomoranSuratResource extends Resource
     {
         return $form
             ->schema([
-                // 1. INFORMASI SURAT (Read-Only)
-            Forms\Components\Section::make('Detail Permohonan')
-                ->description('Data ini tidak dapat diubah oleh Operator Penomoran.')
-                ->schema([
-                    Forms\Components\TextInput::make('user.name')
-                    ->label('Nama Dosen')
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->user?->name ?? '-');
-                    }),
-                    Forms\Components\TextInput::make('config.value')
-                    ->label('Jenis Surat')
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->config?->value ?? '-');
-                    }),
-                    Forms\Components\Textarea::make('keteranganEssai.kolom_1')
-                    ->label(fn ($record) => match ($record?->config_id) {
-                        1, 4 ,5 => 'Nama Jurnal',
-                        2, 3 => 'Nama Kegiatan',
-                        default => 'Detail 1',
-                    })
-                    ->disabled()
-                    ->columnSpanFull()
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->keteranganEssai?->kolom_1 ?? '-');
-                    }),
-                    Forms\Components\Textarea::make('keteranganEssai.kolom_2')
-                    ->label(fn ($record) => match ($record?->config_id) {
-                        1, 4, 5=> 'e-ISSN',
-                        2 => 'Penyelenggara',
-                        3 => 'Tanggal Kegiatan', // Sesuai isian dosen
-                        default => 'Detail 2',
-                    })
-                    ->disabled()
-                    ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 3, 4, 5]))
-                    ->columnSpanFull()
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->keteranganEssai?->kolom_2 ?? '-');
-                    }),
-                    Forms\Components\Textarea::make('keteranganEssai.kolom_3')
-                    ->label(fn ($record) => match ($record?->config_id) {
-                        1, 4, 5 => 'Judul Penelitian',
-                        2 => 'Tempat Kegiatan',
-                        default => 'Detail 3',
-                    })
-                    ->disabled()
-                    ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
-                    ->columnSpanFull()
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->keteranganEssai?->kolom_3 ?? '-');
-                    }),
-                    Forms\Components\Textarea::make('keteranganEssai.kolom_4')
-                    ->label(fn ($record) => match ($record?->config_id) {
-                        1, 4, 5 => 'Link Jurnal',
-                        2 => 'Tanggal Kegiatan',
-                        default => 'Detail 4',
-                    })
-                    ->disabled()
-                    ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
-                    ->columnSpanFull()
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->keteranganEssai?->kolom_4 ?? '-');
-                    }),
-                    Forms\Components\Textarea::make('keteranganEssai.kolom_5')
-                    ->label(fn ($record) => match ($record?->config_id) {
-                        2 => 'Nama Kegiatan / Keterangan',
-                        default => 'Keterangan Tambahan',
-                    })
-                    ->disabled()
-                    ->visible(fn ($record) => in_array($record?->config_id, [2]))
-                    ->columnSpanFull()
-                    ->afterStateHydrated(function ($component, $record) {
-                        // Ambil nama dari relasi user
-                        $component->state($record->keteranganEssai?->kolom_5 ?? '-');
-                    }),
-                ])->columns(2),
+                // 1. INFORMASI SURAT (Read-Only Sesuai Tampilan Lo Bro)
+                Section::make('Detail Permohonan')
+                    ->description('Data ini tidak dapat diubah oleh Operator Penomoran.')
+                    ->schema([
+                        TextInput::make('user.name')
+                            ->label('Nama Dosen')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->user?->name ?? '-');
+                            }),
+                        TextInput::make('config.value')
+                            ->label('Jenis Surat')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->config?->value ?? '-');
+                            }),
+                        Textarea::make('keteranganEssai.kolom_1')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4 ,5 => 'Nama Jurnal',
+                                2, 3 => 'Nama Kegiatan',
+                                default => 'Detail 1',
+                            })
+                            ->disabled()
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->keteranganEssai?->kolom_1 ?? '-');
+                            }),
+                        Textarea::make('keteranganEssai.kolom_2')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4, 5=> 'e-ISSN',
+                                2 => 'Penyelenggara',
+                                3 => 'Tanggal Kegiatan',
+                                default => 'Detail 2',
+                            })
+                            ->disabled()
+                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 3, 4, 5]))
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->keteranganEssai?->kolom_2 ?? '-');
+                            }),
+                        Textarea::make('keteranganEssai.kolom_3')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4, 5 => 'Judul Penelitian',
+                                2 => 'Tempat Kegiatan',
+                                default => 'Detail 3',
+                            })
+                            ->disabled()
+                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->keteranganEssai?->kolom_3 ?? '-');
+                            }),
+                        Textarea::make('keteranganEssai.kolom_4')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                1, 4, 5 => 'Link Jurnal',
+                                2 => 'Tanggal Kegiatan',
+                                default => 'Detail 4',
+                            })
+                            ->disabled()
+                            ->visible(fn ($record) => in_array($record?->config_id, [1, 2, 4, 5]))
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->keteranganEssai?->kolom_4 ?? '-');
+                            }),
+                        Textarea::make('keteranganEssai.kolom_5')
+                            ->label(fn ($record) => match ($record?->config_id) {
+                                2 => 'Nama Kegiatan / Keterangan',
+                                default => 'Keterangan Tambahan',
+                            })
+                            ->disabled()
+                            ->visible(fn ($record) => in_array($record?->config_id, [2]))
+                            ->columnSpanFull()
+                            ->afterStateHydrated(function ($component, $record) {
+                                $component->state($record->keteranganEssai?->kolom_5 ?? '-');
+                            }),
+                    ])->columns(2),
 
-            // 2. INPUT NOMOR SURAT (Tugas Utama OPS)
-            Forms\Components\Section::make('Penomoran Resmi')
-                ->schema([
-                    Forms\Components\TextInput::make('no_surat') // Pastikan ada kolom ini di tabel permohonan_surats
-                        ->label('Nomor Surat Resmi')
-                        ->placeholder('Contoh: 123/UN7.F3.3/HK/2026')
-                        ->required()
-                        ->unique(ignoreRecord: true), // Biar gak ada nomor surat ganda
-                    
-                    Forms\Components\Hidden::make('status_terakhir')
-                        ->default('Surat_Terbit'), // Otomatis selesai setelah disimpan
-                ])
-                //
-            ]);
-    }
-    public static function canViewAny(): bool
-    {
-        // Sesuaikan nama role-nya di database lo, misalnya 'Operator_Penomoran'
-        return auth()->user()->role === 'Operator_Nomor';
-    }
+                // 2. DATA DOSEN ANGGOTA (SEKARANG SUDAH MASUK JALUR UTAMA FORM)
+                Group::make()
+                    ->relationship('keteranganEssai')
+                    ->schema([
+                        Section::make('Data Dosen Anggota')
+                            ->schema([
+                                Forms\Components\Repeater::make('anggota_tim')
+                                    ->label('Daftar Anggota')
+                                    ->schema([
+                                        Select::make('user_id')
+                                            ->label('Nama Dosen Anggota')
+                                            ->options(User::where('role', 'Dosen')->get()->mapWithKeys(fn ($user) => [
+                                                $user->id => "{$user->name} ({$user->email})"
+                                            ]))
+                                            ->disabled(), // Dikunci agar OPS hanya bisa meninjau
 
-    public static function getEloquentQuery(): Builder
-    {
-        // OPS hanya melihat surat yang sudah disetujui Dekan dan belum diberi nomor
-        return parent::getEloquentQuery()
-            ->with(['keteranganEssai', 'config'])
-            ->where('status_terakhir', 'Selesai_Pimpinan');
+                                        TextInput::make('email')
+                                            ->label('Email')
+                                            ->disabled(),
+                                    ])
+                                    ->columns(2)
+                                    ->disabled() // Mencegah manipulasi baris oleh OPS
+                                    ->dehydrated(false),
+                            ]),
+                    ])->columnSpanFull(),
+
+                // 3. INPUT NOMOR SURAT (Tugas Utama OPS)
+                Section::make('Penomoran Resmi')
+                    ->schema([
+                        TextInput::make('nomor_surat')
+                            ->label('Nomor Surat Resmi')
+                            ->placeholder('Contoh: 123/UN7.F3.3/HK/2026')
+                            ->required()
+                            ->unique(ignoreRecord: true), // Validasi anti nomor ganda
+                        
+                        Hidden::make('status_terakhir')
+                            ->default('Surat_Terbit'), // Auto update status berkas
+                    ])
+            ]); // Gerbang utama penutup array ->schema() sekarang berada di sini bro!
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                    Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')
                     ->date()
                     ->sortable(),
@@ -154,30 +166,32 @@ class PenomoranSuratResource extends Resource
                     ->label('Keterangan')
                     ->limit(30),
             ])
-
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->label('Beri Nomor')
                     ->icon('heroicon-o-pencil-square')
                     ->color('success'),
-                // Tables\Actions\DeleteAction::make(),
-
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
-    public static function getRelations(): array
+    public static function getRelations(): array { return []; }
+
+    public static function canViewAny(): bool
     {
-        return [
-            //
-        ];
+        return auth()->user()->role === 'Operator_Nomor';
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['keteranganEssai', 'config'])
+            ->where('status_terakhir', 'Selesai_Pimpinan');
     }
 
     public static function getPages(): array

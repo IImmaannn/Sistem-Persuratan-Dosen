@@ -18,7 +18,7 @@ class LogPersetujuanResource extends Resource
     // Label di Sidebar
     protected static ?string $navigationLabel = 'Log Aktivitas';
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
-    protected static ?int $navigationSort = 2; // Muncul di bawah menu Dashboard Admin
+    protected static ?int $navigationSort = 3; // Muncul di bawah menu Dashboard Admin
 
     public static function table(Table $table): Table
     {

@@ -14,7 +14,8 @@ class Config extends Model
     protected $fillable = [
         'kategori', // Contoh: 'jenis_surat' atau 'jenis_penelitian'
         'key',      // Slug atau identitas singkat
-        'value',    // Teks yang akan muncul di UI
+        'value',
+        'template_path',    // Teks yang akan muncul di UI
     ];
 
     /**

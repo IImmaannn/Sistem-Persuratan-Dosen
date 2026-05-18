@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -35,9 +36,9 @@ class PermohonanSurat extends Model
     public function keteranganEssai(): HasOne {
             return $this->hasOne(KeteranganEssai::class, 'permohonan_surat_id');
     }
-    public function logPersetujuans()
+    // TAMBAHKAN FUNGSI INI: Relasi ke Log Persetujuan (Pimpinan)
+    public function logPersetujuans(): HasMany
     {
-        // Gunakan 'permohonan_id' sesuai yang terlihat di error SQL lo sebelumnya
         return $this->hasMany(LogPersetujuan::class, 'permohonan_id');
     }
     public function latestLog() {

@@ -54,11 +54,11 @@ class PersetujuanSuratResource extends Resource
                         ->label('Data Dosen Anggota')
                         ->schema([
                             Forms\Components\TextInput::make('nama')->required(),
-                            Forms\Components\TextInput::make('nip')->required(),
+                            Forms\Components\TextInput::make('email')->required(),
                         ])
                         ->columns(2)
                         ->addActionLabel('Tambah Dosen Lain')
-                        ->minItems(1)
+                        ->minItems(0)
                         ->disabled(),
                     ])->columnSpanFull(),                  
 
