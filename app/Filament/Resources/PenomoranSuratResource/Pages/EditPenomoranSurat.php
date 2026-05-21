@@ -23,21 +23,21 @@ class EditPenomoranSurat extends EditRecord
         return [];
     }
 
-    /**
-     * OTOMATIS REDIRECT BALIK KE TABEL UTAMA SETELAH BERHASIL SAVE
-     */
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
     }
 
-    /**
-     * OTOMATISASI PASCA KLIK TOMBOL 'SAVE CHANGES' (VERSI SINKRONISASI TOTAL)
-     */
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        $data['status_terakhir'] = 'Selesai_Pimpinan';
+        return $data;
+    }
+
     protected function afterSave(): void
     {
         $record = $this->getRecord();
-        $essai = $record->keteranganEssai; // Ambil data biner teks pembantu
+        $essai = $record->keteranganEssai; 
 
         // === LANGKAH A: PROSES PENYUSUNAN FILE WORD (.docx) ===
         $config = $record->config; 
@@ -56,7 +56,7 @@ class EditPenomoranSurat extends EditRecord
         if (!$templateFile || !Storage::disk('public')->exists($templateFile)) {
             \Filament\Notifications\Notification::make()
                 ->title('File Template .docx Hilang!')
-                ->body('Sistem tidak menemukan file fisik template di server storage. Silakan periksa halaman Asset.')
+                ->body('Sistem tidak menemukan file fisik template di server storage.')
                 ->danger()
                 ->send();
             return;
@@ -65,51 +65,84 @@ class EditPenomoranSurat extends EditRecord
         $templatePath = storage_path('app/public/' . $templateFile);
         $templateProcessor = new TemplateProcessor($templatePath);
 
-        // Isi placeholder teks dokumen standar dari tabel nomor surat dan tabel essai bray
-        $templateProcessor->setValue('NOMOR_SURAT', $record->nomor_surat);
-        $templateProcessor->setValue('kolom_1', $essai?->kolom_1 ?? '-');
-        $templateProcessor->setValue('kolom_2', $essai?->kolom_2 ?? '-');
-        $templateProcessor->setValue('kolom_3', $essai?->kolom_3 ?? '-');
-        $templateProcessor->setValue('kolom_4', $essai?->kolom_4 ?? '-');
+        $formatTanggalIndo = function($tanggal) {
+            if (!$tanggal || $tanggal === '-') return '-';
+            // Cek apakah formatnya YYYY-MM-DD
+            if (preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/", $tanggal)) {
+                $bulanIndo = [
+                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 
+                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 
+                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+                ];
+                $pecah = explode('-', $tanggal);
+                // Hasilkan: 16 Oktober 2026
+                return (int)$pecah[2] . ' ' . $bulanIndo[(int)$pecah[1]] . ' ' . $pecah[0];
+            }
+            return $tanggal;
+        };
 
-        // KUMPULKAN DATA DOSEN SECARA AKURAT (PENGAJU VIA RELASI USER)
-        $namaDosenArr = [];
-        $nipDosenArr = [];
-        $pangkatDosenArr = [];
+        $templateProcessor->setValue('NOMOR_SURAT', $record->nomor_surat);
+        
+        // Panggil fungsi tanggal untuk semua kolom yang berpotensi berisi tanggal
+        $templateProcessor->setValue('kolom_1', $formatTanggalIndo($essai?->kolom_1 ?? '-'));
+        $templateProcessor->setValue('kolom_2', $formatTanggalIndo($essai?->kolom_2 ?? '-'));
+        $templateProcessor->setValue('kolom_3', $formatTanggalIndo($essai?->kolom_3 ?? '-'));
+        $templateProcessor->setValue('kolom_4', $formatTanggalIndo($essai?->kolom_4 ?? '-'));
+
+        // KUMPULKAN DATA DOSEN SECARA DINAMIS (ARRAY)
+        $listDosen = []; 
         $targetEmails = [];
 
         if ($record->user) {
-            $namaDosenArr[] = $record->user->name;
-            $nipDosenArr[] = $record->user->profile?->nip ?? '-';
-            $pangkatDosenArr[] = $record->user->profile?->pangkat_golongan ?? '-';
-            
+            $listDosen[] = [
+                'nama' => $record->user->name,
+                'nip' => $record->user->profile?->nip ?? '-',
+                'pangkat' => $record->user->profile?->golongan ?? $record->user->profile?->pangkat_golongan ?? '-',
+            ];
             if ($record->user->email) {
                 $targetEmails[] = $record->user->email;
             }
         }
 
-        // KUMPULKAN DATA DOSEN ANGOTA KELOMPOK JIKA ADA (DARI REPEATER JSON ANGGOTA TIM)
-        if ($essai && is_array($essai->anggota_tim)) {
-            foreach ($essai->anggota_tim as $anggota) {
-                if (!empty($anggota['user_id'])) {
-                    $userAnggota = User::find($anggota['user_id']);
-                    if ($userAnggota) {
-                        $namaDosenArr[] = $userAnggota->name;
-                        $nipDosenArr[] = $userAnggota->profile?->nip ?? '-';
-                        $pangkatDosenArr[] = $userAnggota->profile?->pangkat_golongan ?? '-';
-                        if ($userAnggota->email) {
-                            $targetEmails[] = $userAnggota->email;
+        if ($essai && !empty($essai->anggota_tim)) {
+            $anggotaTim = is_string($essai->anggota_tim) ? json_decode($essai->anggota_tim, true) : $essai->anggota_tim;
+
+            if (is_array($anggotaTim)) {
+                foreach ($anggotaTim as $anggota) {
+                    if (!empty($anggota['user_id'])) {
+                        $userAnggota = User::find($anggota['user_id']);
+                        if ($userAnggota) {
+                            $listDosen[] = [
+                                'nama' => $userAnggota->name,
+                                'nip' => $userAnggota->profile?->nip ?? '-',
+                                'pangkat' => $userAnggota->profile?->golongan ?? $userAnggota->profile?->pangkat_golongan ?? '-',
+                            ];
+                            if ($userAnggota->email) {
+                                $targetEmails[] = $userAnggota->email;
+                            }
                         }
                     }
                 }
             }
         }
 
-        $templateProcessor->setValue('NAMA_DOSEN', implode(", ", $namaDosenArr));
-        $templateProcessor->setValue('NIP_DOSEN', implode(" / ", $nipDosenArr));
-        $templateProcessor->setValue('PANGKAT_DOSEN', implode(" / ", $pangkatDosenArr));
+        // KLONING BLOK DOSEN DI WORD SESUAI JUMLAH ORANG
+        $templateProcessor->cloneBlock('block_dosen', count($listDosen), true, true);
 
-        // Sinkronisasi Gambar TTD berdasarkan key_aset di halaman admin bray
+        // ISI DATA MASING-MASING ORANG & LOGIKA PENOMORAN
+        $totalDosen = count($listDosen);
+        foreach ($listDosen as $index => $dosen) {
+            $i = $index + 1; 
+            
+            // Logika Penomoran: Kalau dosen lebih dari 1, kasih angka "1. ", kalau cuma 1, kosongin!
+            $teksNomor = ($totalDosen > 1) ? $i . ". " : "";
+            
+            $templateProcessor->setValue('NO_DOSEN#' . $i, $teksNomor);
+            $templateProcessor->setValue('NAMA_DOSEN#' . $i, $dosen['nama']);
+            $templateProcessor->setValue('NIP_DOSEN#' . $i, $dosen['nip']);
+            $templateProcessor->setValue('PANGKAT_DOSEN#' . $i, $dosen['pangkat']);
+        }
+
         $ttdAsset = SystemAsset::where('key_aset', 'ttd_dekan')->first();
         if ($ttdAsset && Storage::disk('public')->exists($ttdAsset->file_path)) {
             $imagePath = storage_path('app/public/' . $ttdAsset->file_path);
@@ -123,84 +156,184 @@ class EditPenomoranSurat extends EditRecord
             $templateProcessor->setValue('TTD_IMAGE', '');
         }
 
-        // Simpan file sementara Word (.docx)
         $tempDocxName = 'temp_mail_surat_' . time() . '.docx';
         $tempDocxPath = storage_path('app/public/' . $tempDocxName);
         $templateProcessor->saveAs($tempDocxPath);
 
 
-        // === LANGKAH B: KONVERSI KE PDF & SIMPAN PERMANEN KE STORAGE ===
+        // === LANGKAH B: KONVERSI KE PDF (VIA HTML INTERCEPTION HACK) ===
         try {
             ini_set('memory_limit', '512M');
-
-            Settings::setPdfRendererName(Settings::PDF_RENDERER_MPDF);
-            Settings::setPdfRendererPath(base_path('vendor/mpdf/mpdf'));
-
+            
             $phpWord = IOFactory::load($tempDocxPath);
             
+            try {
+                $phpWord->setDefaultFontName('Times New Roman');
+                $phpWord->setDefaultFontSize(12);
+
+                foreach ($phpWord->getSections() as $section) {
+                    foreach ($section->getElements() as $element) {
+                        if ($element instanceof \PhpOffice\PhpWord\Element\Table) {
+                            $tableStyle = $element->getStyle();
+                            if (is_object($tableStyle) && method_exists($tableStyle, 'setBorderTopSize')) {
+                                $tableStyle->setBorderTopSize(0);
+                                $tableStyle->setBorderBottomSize(0);
+                                $tableStyle->setBorderLeftSize(0);
+                                $tableStyle->setBorderRightSize(0);
+                                if (method_exists($tableStyle, 'setInsideHSize')) {
+                                    $tableStyle->setInsideHSize(0); 
+                                    $tableStyle->setInsideVSize(0); 
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $th) {
+                \Log::warning('Gagal memanipulasi border tabel: ' . $th->getMessage());
+            }
+
             $pdfFolder = 'surat_selesai';
             if (!Storage::disk('public')->exists($pdfFolder)) {
                 Storage::disk('public')->makeDirectory($pdfFolder);
             }
 
-            $phpWord->setDefaultFontName('Times New Roman');
-            $phpWord->setDefaultFontSize(12);
-
-            // ============================================================
-            // 🔥 KODE PENYELAMAT KOP SURAT: HAPUS PAKSA BORDER TABEL 🔥
-            // ============================================================
-            // Sistem akan menyisir semua tabel (termasuk tabel Kop Surat) 
-            // dan memaksa ukuran bingkainya menjadi 0 (Tanpa Bingkai)
-            foreach ($phpWord->getSections() as $section) {
-                foreach ($section->getElements() as $element) {
-                    if ($element instanceof \PhpOffice\PhpWord\Element\Table) {
-                        $tableStyle = $element->getStyle();
-                        
-                        // Set ukuran border luar menjadi 0
-                        $tableStyle->setBorderTopSize(0);
-                        $tableStyle->setBorderBottomSize(0);
-                        $tableStyle->setBorderLeftSize(0);
-                        $tableStyle->setBorderRightSize(0);
-                        
-                        // Set ukuran border dalam (gridlines) menjadi 0
-                        $tableStyle->setInsideHSize(0); // Garis horizontal dalam
-                        $tableStyle->setInsideVSize(0); // Garis vertikal dalam
-                    }
-                }
-            }
-
-            // 2. Kunci ukuran kertas & margin biar tetep 1 halaman rapi
-            foreach ($phpWord->getSections() as $section) {
-                $sectionStyle = $section->getStyle();
-                $sectionStyle->setPageSizeW(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(21)); 
-                $sectionStyle->setPageSizeH(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(29.7)); 
-                $sectionStyle->setMarginTop(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(1.5));  
-                $sectionStyle->setMarginBottom(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(1.5));
-                $sectionStyle->setMarginLeft(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(2));
-                $sectionStyle->setMarginRight(\PhpOffice\PhpWord\Shared\Converter::cmToTwip(2));
-            }
-            
             $pdfName = 'Surat_Tugas_Resmi_' . $record->id . '_' . time() . '.pdf';
             $pdfRelativePath = $pdfFolder . '/' . $pdfName; 
             $pdfFullPath = storage_path('app/public/' . $pdfRelativePath); 
             
-            $xmlWriter = IOFactory::createWriter($phpWord, 'PDF');
-            $xmlWriter->save($pdfFullPath);
+            $htmlWriter = IOFactory::createWriter($phpWord, 'HTML');
+            $tempHtmlPath = storage_path('app/public/temp_html_' . time() . '.html');
+            $htmlWriter->save($tempHtmlPath);
+
+            $htmlContent = file_get_contents($tempHtmlPath);
+
+            $cssInjection = '
+            <style>
+                /* 1. MARGIN KERTAS UTAMA*/
+                @page { margin: 1cm 1cm 1cm 1cm !important; } 
+                
+                body { 
+                    font-family: "Times New Roman", Times, serif; 
+                    font-size: 12pt; 
+                    line-height: 1.15; 
+                }
+                
+                /* 2. DORONG SEMUA TAG KE DALAM*/
+                p, ul, ol, div, table:not(:first-of-type) {
+                    margin-left: 0.75cm !important;  
+                    margin-right: 0.75cm !important; 
+                }
+
+                p { 
+                    margin-top: 2px !important; 
+                    margin-bottom: 2px !important; 
+                }
+
+                table { 
+                    width: 100% !important; 
+                    border-collapse: collapse; 
+                    table-layout: fixed; 
+                    border: none !important;
+                    margin-bottom: 5px !important; 
+                }
+                td { 
+                    vertical-align: middle !important; 
+                    padding: 3px; 
+                    word-wrap: break-word; 
+                    border: none !important;
+                }
+                
+                hr { display: none !important; }
+                
+                   
+                
+                table:first-of-type {
+                    width: 100% !important; 
+                    margin-left: 0 !important; 
+                    margin-right: 0 !important; 
+                    border: none !important;
+                }
+                
+                table:first-of-type p, 
+                table:first-of-type div {
+                    margin-left: 0 !important;
+                    margin-right: 0 !important;
+                }
+
+                /* Kolom 1: Logo UNDIP*/
+                table:first-of-type td:nth-child(1) { 
+                    width: 16% !important; 
+                    text-align: left !important; 
+                    padding-left: 0 !important; 
+                }
+                
+                /* LOGO DIBESARKAN 115px*/
+                table:first-of-type td:nth-child(1) img {
+                    width: 115px !important; 
+                    max-width: none !important; 
+                    height: auto !important;
+                    display: block !important;
+                }
+                
+                /* Kolom 2: Teks Kementerian & Fakultas */
+                table:first-of-type td:nth-child(2) { 
+                    width: 53% !important; 
+                    text-align: left !important; 
+                    line-height: 1.1; 
+                }
+                
+                /* Kolom 3: Alamat & Kontak*/
+                table:first-of-type td:nth-child(3) { 
+                    width: 31% !important; 
+                    text-align: right !important; 
+                    padding-right: 0 !important; 
+                    font-size: 1.0 !important; 
+                    line-height: 1.0 !important; 
+                }
+                /* ========================================================= */
+                
+            </style>
+            </head>';
+
+            $htmlContent = str_replace('</head>', $cssInjection, $htmlContent);
+
+            $dompdf = new \Dompdf\Dompdf();
+            $options = $dompdf->getOptions();
+            $options->set('isHtml5ParserEnabled', true);
+            $options->set('isRemoteEnabled', true);
+            $dompdf->setOptions($options);
+            
+            $dompdf->loadHtml($htmlContent);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            file_put_contents($pdfFullPath, $dompdf->output());
+
+            if (file_exists($tempHtmlPath)) {
+                unlink($tempHtmlPath);
+            }
 
         } catch (\Throwable $e) {
-            \Log::error('CRASH PADA PROSES MPDF: ' . $e->getMessage());
+            \Log::error('CRASH PADA PROSES DOMPDF: ' . $e->getMessage());
+            
+            \Filament\Notifications\Notification::make()
+                ->title('Gagal Render PDF DomPDF!')
+                ->body('Pesan Error: ' . $e->getMessage())
+                ->danger()
+                ->persistent()
+                ->send();
+
             if (file_exists($tempDocxPath)) { unlink($tempDocxPath); }
             return;
         }
-
+        
         if (file_exists($tempDocxPath)) {
             unlink($tempDocxPath);
         }
 
         $targetEmails = array_unique($targetEmails);
 
-
-        // === LANGKAH C: BLAST EMAIL MENGGUNAKAN MAIL::HTML ===
+        //BLAST EMAIL MENGGUNAKAN MAIL::HTML
         try {
             $htmlBody = '
                 <p>Halo, Bapak/Ibu Dosen FH Universitas Diponegoro,</p>
@@ -223,18 +356,22 @@ class EditPenomoranSurat extends EditRecord
                 });
             }
 
-            // === LANGKAH D: UPDATE DATA DATABASE (FIX KUNCI UTAMA) ===
-            // 1. Kita ubah status_terakhir menjadi 'Surat_Terbit' agar otomatis tendang keluar dari antrean dashboard!
-            // 2. Simpan jalur file fisik ke kolom file_surat_selesai
-            $record->update([
-                'status_terakhir' => 'Surat_Terbit', 
-                'file_surat_selesai' => $pdfRelativePath, 
-            ]);
+            // === LANGKAH D: UPDATE DATABASE KETIKA SEMUA PROSES BERHASIL ===
+            \DB::table($record->getTable())
+                ->where('id', $record->id)
+                ->update([
+                    'status_terakhir' => 'Surat_Terbit',
+                    'file_surat_selesai' => $pdfRelativePath,
+                    'updated_at' => now()
+                ]);
+
+            $emailListString = empty($targetEmails) ? 'KOSONG! (Gagal narik email)' : implode(', ', $targetEmails);
 
             \Filament\Notifications\Notification::make()
                 ->title('Surat Tugas Berhasil Diproses!')
-                ->body('Nomor resmi disematkan, berkas disimpan, dan PDF sudah meluncur ke Mailtrap!')
+                ->body('Status berhasil diubah. Target Email: ' . $emailListString)
                 ->success()
+                ->persistent() 
                 ->send();
 
         } catch (\Throwable $e) {

@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-
-
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
@@ -14,20 +12,15 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Jeffgreco13\FilamentBreezy\Traits\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Spatie\MediaLibrary\HasMedia; // TAMBAHKAN INI
-use Spatie\MediaLibrary\InteractsWithMedia; // TAMBAHKAN INI
+use Spatie\Permission\Traits\HasRoles; // Cukup 1 kali import ini
+use Spatie\MediaLibrary\HasMedia; 
+use Spatie\MediaLibrary\InteractsWithMedia; 
+use BezhanSalleh\FilamentShield\Traits\HasPanelShield; // Tambahin ini
 
 class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerifyEmail, HasMedia
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable, HasApiTokens, InteractsWithMedia;
+    use HasFactory, Notifiable, HasRoles, TwoFactorAuthenticatable, HasApiTokens, InteractsWithMedia, HasPanelShield;
     
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -35,21 +28,11 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerif
         'avatar_url',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -57,11 +40,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerif
             'password' => 'hashed',
         ];
     }
-
-    // public function getFilamentAvatarUrl(): ?string
-    // {
-    //     return asset($this->avatar_url);
-    // }
 
     public function getFilamentAvatarUrl(): ?string
     {
@@ -72,13 +50,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerif
     {
         return true;
     }
+
     public function profile()
     {
-        return $this->hasOne(DosenProfile::class); // Satu User punya satu Profile [cite: 66]
+        return $this->hasOne(DosenProfile::class); 
     }
 
     public function permohonans()
     {
-        return $this->hasMany(PermohonanSurat::class); // Satu User bisa ajukan banyak Surat [cite: 74]
+        return $this->hasMany(PermohonanSurat::class);
     }
 }

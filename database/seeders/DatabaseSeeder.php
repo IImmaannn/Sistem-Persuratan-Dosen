@@ -66,6 +66,160 @@ class DatabaseSeeder extends Seeder
             'pangkat' => 'Penata Muda Tk. I',
             'jabatan' => 'Lektor',
         ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen2',
+            'name' => 'Mahon Jo, M.Kom',
+            'email' => 'mahonjo@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Laki-laki',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501012023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-01',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen3',
+            'name' => 'Choi Sangho, M.Kom',
+            'email' => 'choisangho@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Laki-laki',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501022023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-02',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen4',
+            'name' => 'Deokbong Kim, M.Kom',
+            'email' => 'deokbongkim@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Laki-laki',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501032023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-03',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen5',
+            'name' => 'Kang Hannam, M.Kom',
+            'email' => 'kanghannam@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Laki-laki',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501112023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-11',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen6',
+            'name' => 'Owen Knight M.Kom',
+            'email' => 'owenknight@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Laki-laki',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501122023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-12',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen7',
+            'name' => 'Jahyeon Jo, M.Kom',
+            'email' => 'jahyeonjo@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Laki-laki',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501132023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-13',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
+        // 3. Buat Akun DOSEN (Plus Data Profil)
+        $dosen = User::create([
+            'username' => 'dosen8',
+            'name' => 'Shelly Scott, M.Kom',
+            'email' => 'sehllyscott@filkom.edu',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'role' => 'Dosen',
+            'gender' => 'Perempuan',
+        ]);
+        $dosen->assignRole('Dosen');
+
+        // Isi tabel dosen_profiles (Wajib sesuai ERD)
+        DosenProfile::create([
+            'user_id' => $dosen->id,
+            'nip' => '200501142023030401', // NIP Contoh
+            'tempat_lahir' => 'Soul',
+            'tanggal_lahir' => '2005-01-14',
+            'golongan' => 'III/b',
+            'pangkat' => 'Penata Muda Tk. I',
+            'jabatan' => 'Lektor',
+        ]);
 
         // 4. Buat Akun OPERATOR SURAT (OCS - Verifikator Awal)
         $ocs = User::create([

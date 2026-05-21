@@ -97,6 +97,9 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins($this->getPlugins());
+            // ->plugins([
+            //     \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
+            // ]);
     }
 
     private function getPlugins(): array

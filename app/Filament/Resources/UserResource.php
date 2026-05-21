@@ -22,6 +22,8 @@ use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\UserResource\Pages;
 use Filament\Infolists\Components\Section as InfolistSection;
 
+//use STS\FilamentImpersonate\Actions\Impersonate;
+
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
@@ -49,8 +51,16 @@ class UserResource extends Resource
                             'Laki-laki' => 'Laki-laki',
                             'Perempuan' => 'Perempuan',
                         ])
-                        ->relationship('profile', 'gender')
+                        // 🔥 BARIS RELATIONSHIP UDAH GUE HAPUS DI SINI!
                         ->required(),
+
+                    // INI FITUR BARU BUAT GANTI ROLE/JABATAN USER
+                    Select::make('roles')
+                        ->relationship('roles', 'name')
+                        ->multiple()
+                        ->preload()
+                        ->searchable()
+                        ->label('Hak Akses (Role)'),
                 ])->columns(2),
             ]);
     }
@@ -64,7 +74,8 @@ class UserResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('profile.gender')
+                // 🔥 GANTI JADI 'gender' DOANG, BUKAN 'profile.gender'
+                Tables\Columns\TextColumn::make('gender') 
                     ->label('Gender')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
