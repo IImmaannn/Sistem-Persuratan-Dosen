@@ -18,6 +18,8 @@ use Filament\Notifications\Notification;
 class PersetujuanSuratResource extends Resource
 {
     protected static ?string $model = PermohonanSurat::class;
+    protected static ?string $modelLabel = 'Persetujuan Surat';
+    protected static ?string $pluralModelLabel = 'Daftar Persetujuan Surat';
     protected static ?string $navigationLabel = 'Dashboard';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';

@@ -23,6 +23,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class PenomoranSuratResource extends Resource
 {
     protected static ?string $model = PermohonanSurat::class;
+    protected static ?string $modelLabel = 'Verifikasi Surat';
+    protected static ?string $pluralModelLabel = 'Daftar Penomoran Surat';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'Penomoran Surat';

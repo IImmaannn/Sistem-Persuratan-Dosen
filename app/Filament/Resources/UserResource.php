@@ -21,6 +21,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Actions\ExportBulkAction;
 use App\Filament\Resources\UserResource\Pages;
 use Filament\Infolists\Components\Section as InfolistSection;
+use STS\FilamentImpersonate\Tables\Actions\Impersonate;
 
 //use STS\FilamentImpersonate\Actions\Impersonate;
 
@@ -29,8 +30,10 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
     
     // Label di Sidebar berubah jadi Dashboard
-    protected static ?string $navigationLabel = 'Dashboard';
-    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static ?string $modelLabel = 'Manajemen User';
+    protected static ?string $pluralModelLabel = 'Daftar User';
+    protected static ?string $navigationLabel = 'Users';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -103,6 +106,7 @@ class UserResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Impersonate::make(),
             ])
             ->headerActions([
                 ExportAction::make()->exporter(UserExporter::class),

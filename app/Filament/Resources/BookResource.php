@@ -127,4 +127,9 @@ class BookResource extends Resource implements HasShieldPermissions
                 ]),
             ]);
     }
+
+    public static function canViewAny(): bool
+    {
+        return false; // Memblokir semua orang dari halaman ini
+    }
 }

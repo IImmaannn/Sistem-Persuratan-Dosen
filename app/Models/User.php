@@ -50,6 +50,17 @@ class User extends Authenticatable implements FilamentUser, HasAvatar, MustVerif
     {
         return true;
     }
+    // Cuma Super Admin yang boleh ngerasukin akun orang lain
+    public function canImpersonate()
+    {
+        return $this->hasRole('super_admin');
+    }
+
+    // Tentukan siapa aja yang BOLEH dirasuki (dalam hal ini, Super Admin gak boleh dirasuki)
+    public function canBeImpersonated()
+    {
+        return !$this->hasRole('super_admin');
+    }
 
     public function profile()
     {

@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Builder;
 class VerifikasiPermohonanResource extends Resource
 {
     protected static ?string $model = PermohonanSurat::class;
+    protected static ?string $modelLabel = 'Penomoran Surat';
+    protected static ?string $pluralModelLabel = 'Daftar Verifikasi Surat';
     protected static ?string $navigationLabel = 'Dashboard';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $slug = 'dashboard-operator';
