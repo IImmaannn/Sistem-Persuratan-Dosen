@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Dashboard;
+// use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\Login;
 use App\Models\User;
 use App\Settings\KaidoSetting;
@@ -59,13 +59,13 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('Form')
             // REDIRECTION UTAMA: Admin langsung ke UserResource
             ->homeUrl(fn () => match (auth()->user()?->role) {
-                'Admin' => UserResource::getUrl(),
+                // 'Admin' => UserResource::getUrl(),
                 'Supervisor', 'Manager', 'Wakil_Dekan', 'Dekan' => PersetujuanSuratResource::getUrl(),
                 'Operator_Surat' => VerifikasiPermohonanResource::getUrl(),
                 default => '/',
             })
             ->pages([
-                Dashboard::class, 
+                Pages\Dashboard::class, 
             ])
             ->when($this->settings->login_enabled ?? true, fn($panel) => $panel->login(Login::class))
             ->emailVerification()
