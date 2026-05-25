@@ -34,6 +34,46 @@ class EditPenomoranSurat extends EditRecord
         return $data;
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        if (empty($data['nomor_surat'])) {
+            
+            $tahun = date('Y');
+            $bulan = date('n'); 
+
+            
+            $romawi = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+            $bulanRomawi = $romawi[$bulan];
+
+            
+            $suratTerakhir = \App\Models\PermohonanSurat::whereNotNull('nomor_surat')
+                ->whereYear('updated_at', $tahun) 
+                ->whereMonth('updated_at', $bulan) 
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            $urutan = 1;
+
+            if ($suratTerakhir && $suratTerakhir->nomor_surat) {
+                // Pecah string nomor surat berdasarkan garis miring '/'
+                $pecahan = explode('/', $suratTerakhir->nomor_surat);
+
+                // Ambil angka paling depan, pastiin dia angka, lalu tambahin 1
+                if (isset($pecahan[0]) && is_numeric($pecahan[0])) {
+                    $urutan = (int)$pecahan[0] + 1;
+                }
+            }
+
+            // GABUNGIN JADI FORMAT RESMI
+            // %03d buat nampilin 3 digit (contoh: 001, 012). Kalau mau 1 digit biasa aja, ganti jadi %d
+            $kodeTetap = 'UN7.F1/DK'; 
+            
+            $data['nomor_surat'] = sprintf("%01d", $urutan) . '/' . $kodeTetap . '/' . $bulanRomawi . '/' . $tahun;
+        }
+
+        return $data;
+    }
+
     protected function afterSave(): void
     {
         $record = $this->getRecord();

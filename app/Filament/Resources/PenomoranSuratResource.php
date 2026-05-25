@@ -156,6 +156,9 @@ class PenomoranSuratResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->where(function ($q) {
+                $q->whereNull('nomor_surat')->orWhere('nomor_surat', '');
+            }))
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')
@@ -166,7 +169,9 @@ class PenomoranSuratResource extends Resource
                 Tables\Columns\TextColumn::make('config.value')->label('Perihal'),
                 Tables\Columns\TextColumn::make('keteranganEssai.kolom_1')
                     ->label('Keterangan')
-                    ->limit(30),
+                    ->limit(30)
+                    ->searchable(),
+                
             ])
             ->filters([])
             ->actions([

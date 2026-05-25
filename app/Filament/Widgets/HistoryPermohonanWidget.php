@@ -38,21 +38,27 @@ class HistoryPermohonanWidget extends BaseWidget
                     ->label('Perihal')
                     ->searchable(),
                 // PERBAIKAN: Ambil data dari relasi 'keteranganEssai' secara dinamis
-                Tables\Columns\TextColumn::make('keterangan')
-                    ->label('Keterangan')
-                    ->getStateUsing(function ($record) {
-                        $detail = $record->keteranganEssai;
-                        if (!$detail) return 'Tidak ada detail';
+                // Tables\Columns\TextColumn::make('keterangan')
+                //     ->label('Keterangan')
+                //     ->getStateUsing(function ($record) {
+                //         $detail = $record->keteranganEssai;
+                //         if (!$detail) return 'Tidak ada detail';
 
-                        // Ambil kolom yang sesuai berdasarkan jenis surat
-                        return match ($record->config_id) {
-                            1, 4, 5 => $detail->kolom_3, // Penelitian: Judul Penelitian
-                            3 => $detail->kolom_1, // Penunjang: Nama Kegiatan
-                            2 => $detail->kolom_1, // Narasumber: Nama Kegiatan
-                            default => '-',
-                        };
-                })
-                ->limit(100),
+                //         // Ambil kolom yang sesuai berdasarkan jenis surat
+                //         return match ($record->config_id) {
+                //             1, 4, 5 => $detail->kolom_3, // Penelitian: Judul Penelitian
+                //             3 => $detail->kolom_1, // Penunjang: Nama Kegiatan
+                //             2 => $detail->kolom_1, // Narasumber: Nama Kegiatan
+                //             default => '-',
+                //         };
+                // })
+                // ->limit(100),
+                Tables\Columns\TextColumn::make('nomor_surat')
+                    ->label('Nomor Surat')
+                    ->badge() // Biar tampilannya keren kayak tombol
+                    ->color('success')
+                    ->searchable()
+                    ->copyable(),
          ]);
     }
     public static function canView(): bool
