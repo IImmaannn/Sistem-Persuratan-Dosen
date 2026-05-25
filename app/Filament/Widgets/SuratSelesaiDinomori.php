@@ -29,20 +29,24 @@ class SuratSelesaiDinomori extends BaseWidget
                 // Sesuaikan 'created_at' atau tanggal pengajuan lo
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal')
-                    ->date(),
+                    ->date()
+                    ->searchable(),
                 
                 // Asumsi relasi user
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Nama'),
+                    ->label('Nama')
+                    ->searchable(),
                 
                 // Asumsi relasi profil buat NIP
                 Tables\Columns\TextColumn::make('user.profile.nip')
-                    ->label('NIP'),
+                    ->label('NIP')
+                    ->searchable(),
                 
                 // Asumsi nama perihal
                 Tables\Columns\TextColumn::make('config.value')
-                    ->label('Perihal'),
-                    
+                    ->label('Perihal')
+                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('nomor_surat')
                     ->label('Nomor Surat')
                     ->badge() // Biar tampilannya keren kayak tombol
