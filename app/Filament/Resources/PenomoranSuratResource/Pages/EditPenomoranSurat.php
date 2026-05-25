@@ -41,34 +41,32 @@ class EditPenomoranSurat extends EditRecord
             $tahun = date('Y');
             $bulan = date('n'); 
 
-            
             $romawi = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
             $bulanRomawi = $romawi[$bulan];
-
             
-            $suratTerakhir = \App\Models\PermohonanSurat::whereNotNull('nomor_surat')
-                ->whereYear('updated_at', $tahun) 
-                ->whereMonth('updated_at', $bulan) 
-                ->orderBy('updated_at', 'desc')
-                ->first();
+            $kodeTetap = 'UN7.F1/DK'; 
 
-            $urutan = 1;
+            $akhiranSurat = '/' . $bulanRomawi . '/' . $tahun; 
+            
+            $suratBulanIni = \App\Models\PermohonanSurat::whereNotNull('nomor_surat')
+                ->where('nomor_surat', 'LIKE', '%' . $akhiranSurat)
+                ->get();
 
-            if ($suratTerakhir && $suratTerakhir->nomor_surat) {
-                // Pecah string nomor surat berdasarkan garis miring '/'
-                $pecahan = explode('/', $suratTerakhir->nomor_surat);
+            $maxUrutan = 0;
 
-                // Ambil angka paling depan, pastiin dia angka, lalu tambahin 1
+            foreach ($suratBulanIni as $surat) {
+                $pecahan = explode('/', $surat->nomor_surat);
+                
                 if (isset($pecahan[0]) && is_numeric($pecahan[0])) {
-                    $urutan = (int)$pecahan[0] + 1;
+                    $angka = (int)$pecahan[0];
+                    if ($angka > $maxUrutan) {
+                        $maxUrutan = $angka;
+                    }
                 }
             }
-
-            // GABUNGIN JADI FORMAT RESMI
-            // %03d buat nampilin 3 digit (contoh: 001, 012). Kalau mau 1 digit biasa aja, ganti jadi %d
-            $kodeTetap = 'UN7.F1/DK'; 
+            $urutan = $maxUrutan + 1;
             
-            $data['nomor_surat'] = sprintf("%01d", $urutan) . '/' . $kodeTetap . '/' . $bulanRomawi . '/' . $tahun;
+            $data['nomor_surat'] = sprintf("%d", $urutan) . '/' . $kodeTetap . '/' . $bulanRomawi . '/' . $tahun;
         }
 
         return $data;

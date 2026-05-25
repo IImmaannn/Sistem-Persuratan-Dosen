@@ -13,7 +13,8 @@ class SuratSelesaiDinomori extends BaseWidget
     protected int | string | array $columnSpan = 'full';
 
     // Kasih judul tabelnya
-    protected static ?string $heading = 'Riwayat Surat Telah Dinomori (LIFO)';
+    protected static ?string $heading = 'History Surat';
+    protected static ?int $sort = 3;
 
     public function table(Table $table): Table
     {
@@ -41,8 +42,7 @@ class SuratSelesaiDinomori extends BaseWidget
                 // Asumsi nama perihal
                 Tables\Columns\TextColumn::make('config.value')
                     ->label('Perihal'),
-
-                // 🔥 INI PENGGANTI KOLOM KETERANGAN
+                    
                 Tables\Columns\TextColumn::make('nomor_surat')
                     ->label('Nomor Surat')
                     ->badge() // Biar tampilannya keren kayak tombol
