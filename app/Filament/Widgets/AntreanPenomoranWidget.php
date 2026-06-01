@@ -18,7 +18,7 @@ use App\Services\PenomoranService;
 
 class AntreanPenomoranWidget extends BaseWidget
 {
-    protected static ?int $sort = 2; // Urutan ke-2 (di bawah kotak statistik)
+    protected static ?int $sort = 2; 
     protected int | string | array $columnSpan = 'full';
     protected static ?string $heading = 'Antrean Surat (Belum Dinomori)';
 
@@ -45,7 +45,7 @@ class AntreanPenomoranWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('keteranganEssai.kolom_1')->label('Keterangan')->limit(30),
             ])
             ->actions([
-                // 🚀 TOMBOL 1: JALAN TOL (Beri Nomor Otomatis)
+                // Beri Nomor Otomatis
                 Tables\Actions\Action::make('beri_nomor_otomatis')
                     ->label('Beri Nomor')
                     ->icon('heroicon-o-bolt')
@@ -84,7 +84,6 @@ class AntreanPenomoranWidget extends BaseWidget
                         $nomorBaru = sprintf("%d", $urutan) . '/' . $kodeTetap . '/' . $bulanRomawi . '/' . $tahun;
 
                         // --- 2. UPDATE KE DATABASE SEMENTARA ---
-                        // Kita update nomornya dulu, status_terakhir biar di-update di script PDF nanti
                         $record->update([
                             'nomor_surat' => $nomorBaru
                         ]);
@@ -93,7 +92,7 @@ class AntreanPenomoranWidget extends BaseWidget
                         $service->prosesPenerbitanPDFdanEmail($record);
                     }),
 
-                // 🛠️ TOMBOL 2: JALAN ARTERI (Edit Manual)
+                // Edit Manual
                 Tables\Actions\Action::make('edit_manual')
                     ->label('Edit')
                     ->icon('heroicon-o-pencil-square')

@@ -223,7 +223,7 @@ class PenomoranSuratResource extends Resource
                         $service->prosesPenerbitanPDFdanEmail($record);
                     }),
 
-                // 🛠️ TOMBOL 2: JALAN ARTERI (Edit Manual)
+                // TOMBOL 2: JALAN ARTERI (Edit Manual)
                 Tables\Actions\Action::make('edit_manual')
                     ->label('Manual')
                     ->icon('heroicon-o-pencil-square')

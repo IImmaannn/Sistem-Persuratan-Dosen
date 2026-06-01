@@ -11,9 +11,8 @@ use Illuminate\Database\Eloquent\Builder;
 class StatusPermohonanWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';
-    protected static ?string $heading = 'Status Surat (Dalam Proses)'; 
+    protected static ?string $heading = 'Status Surat'; 
     
-    // 🔥 KUNCI POSISI: Angka 1 bikin dia ada di paling atas!
     protected static ?int $sort = 1; 
 
     public function table(Table $table): Table
@@ -33,7 +32,7 @@ class StatusPermohonanWidget extends BaseWidget
                                     ->orWhere('anggota_tim', 'LIKE', '%"user_id":' . $userId . '%');
                               });
                     })
-                    // 🔥 FILTER STATUS: Cuma tampilkan yang BELUM terbit
+                    //FILTER STATUS: Cuma tampilkan yang BELUM terbit
                     ->where('status_terakhir', '!=', 'Surat_Terbit') 
                     ->latest()
             )

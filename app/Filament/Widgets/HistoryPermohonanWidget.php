@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 class HistoryPermohonanWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';
-    protected static ?string $heading = 'History Surat (Selesai)'; 
+    protected static ?string $heading = 'History Surat'; 
     
     protected static ?int $sort = 2; 
 
