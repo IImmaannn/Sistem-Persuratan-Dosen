@@ -107,7 +107,7 @@ class AdminPanelProvider extends PanelProvider
         $plugins = [
             ThemesPlugin::make(),
             FilamentShieldPlugin::make(),
-            ApiServicePlugin::make(),
+            // ApiServicePlugin::make(),
             BreezyCore::make()
                 ->myProfile(
                     shouldRegisterUserMenu: true,

@@ -3,67 +3,53 @@
 namespace App\Filament\Widgets;
 
 use App\Models\PermohonanSurat;
-use App\Filament\Resources\PermohonanSuratResource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class HistoryPermohonanWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';
-    protected static ?string $heading = 'History'; // Sesuai label wireframe 
+    protected static ?string $heading = 'History Surat (Selesai)'; 
+    
+    protected static ?int $sort = 2; 
 
     public function table(Table $table): Table
     {
+        $userId = auth()->id();
+
         return $table
             ->query(
                 PermohonanSurat::query()
-                    ->where('user_id', auth()->id())
-                    // ->whereIn('status_terakhir', ['Selesai', 'Ditolak']) // Hanya data final 
+                    ->where(function (Builder $query) use ($userId) {
+                        // Cek apakah dia Pembuat Surat
+                        $query->where('user_id', $userId)
+                              // ATAU apakah dia Anggota Tim di dalam keteranganEssai
+                              ->orWhereHas('keteranganEssai', function (Builder $q) use ($userId) {
+                                  $q->where('anggota_tim', 'LIKE', '%"user_id":"' . $userId . '"%')
+                                    ->orWhere('anggota_tim', 'LIKE', '%"user_id":' . $userId . '%');
+                              });
+                    })
+                    //FILTER HISTORY: Cuma tampilkan yang UDAH TERBIT & PUNYA NOMOR
+                    ->where('status_terakhir', 'Surat_Terbit') 
+                    ->whereNotNull('nomor_surat')
                     ->latest()
             )
             ->columns([
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Tanggal') // [cite: 241]
-                    ->date(),
-
-                // Tables\Columns\TextColumn::make('jenisSurat.nama_jenis')
-                //     ->label('Perihal') // [cite: 242]
-                //     ->searchable(), // Fitur Search sesuai wireframe 
-
-                // Tables\Columns\TextColumn::make('keterangan_esai')
-                //     ->label('Keterangan') // [cite: 244]
-                //     ->limit(100),
-                Tables\Columns\TextColumn::make('config.value')
-                    ->label('Perihal')
-                    ->searchable(),
-                // PERBAIKAN: Ambil data dari relasi 'keteranganEssai' secara dinamis
-                // Tables\Columns\TextColumn::make('keterangan')
-                //     ->label('Keterangan')
-                //     ->getStateUsing(function ($record) {
-                //         $detail = $record->keteranganEssai;
-                //         if (!$detail) return 'Tidak ada detail';
-
-                //         // Ambil kolom yang sesuai berdasarkan jenis surat
-                //         return match ($record->config_id) {
-                //             1, 4, 5 => $detail->kolom_3, // Penelitian: Judul Penelitian
-                //             3 => $detail->kolom_1, // Penunjang: Nama Kegiatan
-                //             2 => $detail->kolom_1, // Narasumber: Nama Kegiatan
-                //             default => '-',
-                //         };
-                // })
-                // ->limit(100),
+                Tables\Columns\TextColumn::make('created_at')->label('Tanggal')->date(),
+                Tables\Columns\TextColumn::make('config.value')->label('Perihal')->searchable(),
                 Tables\Columns\TextColumn::make('nomor_surat')
                     ->label('Nomor Surat')
-                    ->badge() // Biar tampilannya keren kayak tombol
+                    ->badge()
                     ->color('success')
                     ->searchable()
                     ->copyable(),
-         ]);
+            ]);
     }
+    
     public static function canView(): bool
     {
-        // Widget ini HANYA boleh dilihat oleh Dosen
         return auth()->user()->role === 'Dosen'; 
     }
 }

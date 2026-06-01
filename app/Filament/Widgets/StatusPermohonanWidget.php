@@ -6,37 +6,46 @@ use App\Models\PermohonanSurat;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class StatusPermohonanWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';
-    protected static ?string $heading = 'Status'; // Sesuai label wireframe 
+    protected static ?string $heading = 'Status Surat (Dalam Proses)'; 
+    
+    // 🔥 KUNCI POSISI: Angka 1 bikin dia ada di paling atas!
+    protected static ?int $sort = 1; 
 
     public function table(Table $table): Table
     {
+        $userId = auth()->id();
+
         return $table
             ->query(
                 PermohonanSurat::query()
-                    ->where('user_id', auth()->id())
-                    // ->whereIn('status_terakhir', ['Draft', 'Proses Verifikasi']) // Surat aktif [cite: 75]
+                    ->where(function (Builder $query) use ($userId) {
+                        // Cek apakah dia Pembuat Surat
+                        $query->where('user_id', $userId)
+                              // ATAU apakah dia Anggota Tim di dalam keteranganEssai
+                              ->orWhereHas('keteranganEssai', function (Builder $q) use ($userId) {
+                                  // Pencarian JSON yang aman untuk database MySQL/Postgres
+                                  $q->where('anggota_tim', 'LIKE', '%"user_id":"' . $userId . '"%')
+                                    ->orWhere('anggota_tim', 'LIKE', '%"user_id":' . $userId . '%');
+                              });
+                    })
+                    // 🔥 FILTER STATUS: Cuma tampilkan yang BELUM terbit
+                    ->where('status_terakhir', '!=', 'Surat_Terbit') 
                     ->latest()
             )
             ->columns([
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Tanggal') // [cite: 237]
-                    ->date(),
-
-               // PERBAIKAN: Ubah dari jenisSurat.nama_jenis ke config.value
-                Tables\Columns\TextColumn::make('config.value')
-                    ->label('Perihal'), // Tetap pakai label Prihal sesuai maumu
-
+                Tables\Columns\TextColumn::make('created_at')->label('Tanggal')->date(),
+                Tables\Columns\TextColumn::make('config.value')->label('Perihal'),
                 Tables\Columns\TextColumn::make('status_terakhir')
-                    ->label('Status') // 
+                    ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'Draft' => 'Draft',
                         'Terverifikasi' => 'Sedang di Supervisor',
-                        // INI KUNCINYA: Map data 'Disetujui_Supervisor' ke teks yang lo mau
                         'Disetujui_Supervisor' => 'Disetujui Supervisor', 
                         'Disetujui_Manager' => 'Disetujui Manager',
                         'Disetujui_Wakil_Dekan' => 'Disetujui Wakil Dekan',
@@ -51,9 +60,9 @@ class StatusPermohonanWidget extends BaseWidget
                     }),
             ]);
     }
+    
     public static function canView(): bool
     {
-        // Widget ini HANYA boleh dilihat oleh Dosen
         return auth()->user()->role === 'Dosen'; 
     }
 }
