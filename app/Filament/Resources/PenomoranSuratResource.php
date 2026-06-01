@@ -19,6 +19,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Services\PenomoranService;
 
 class PenomoranSuratResource extends Resource
 {
@@ -176,10 +177,60 @@ class PenomoranSuratResource extends Resource
             ])
             ->filters([])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->label('Beri Nomor')
+                Tables\Actions\Action::make('beri_nomor_otomatis')
+                    ->label('Otomatis')
+                    ->icon('heroicon-o-bolt')
+                    ->color('success')
+                    ->button()
+                    ->requiresConfirmation() 
+                    ->modalHeading('Penomoran Otomatis')
+                    ->modalDescription('Sistem akan otomatis menghitung nomor, membuat PDF, dan mengirim email. Lanjutkan?')
+                    ->action(function (PermohonanSurat $record) {
+                        
+                        $tahun = date('Y');
+                        $bulan = date('n');
+                        $romawi = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+                        $bulanRomawi = $romawi[$bulan];
+                        $kodeTetap = 'UN7.F1/DK'; 
+                        
+                        $akhiranSurat = '/' . $bulanRomawi . '/' . $tahun; 
+                        
+                        $suratBulanIni = \App\Models\PermohonanSurat::whereNotNull('nomor_surat')
+                            ->where('nomor_surat', 'LIKE', '%' . $akhiranSurat)
+                            ->get();
+
+                        $maxUrutan = 0;
+                        foreach ($suratBulanIni as $surat) {
+                            $pecahan = explode('/', $surat->nomor_surat);
+                            if (isset($pecahan[0]) && is_numeric($pecahan[0])) {
+                                $angka = (int)$pecahan[0];
+                                if ($angka > $maxUrutan) {
+                                    $maxUrutan = $angka;
+                                }
+                            }
+                        }
+
+                        $urutan = $maxUrutan + 1;
+                        $nomorBaru = sprintf("%d", $urutan) . '/' . $kodeTetap . '/' . $bulanRomawi . '/' . $tahun;
+
+                        // UPDATE KE DATABASE SEMENTARA
+                        $record->update([
+                            'nomor_surat' => $nomorBaru
+                        ]);
+
+                        // PANGGIL MESIN UTAMA 
+                        $service = new PenomoranService();
+                        $service->prosesPenerbitanPDFdanEmail($record);
+                    }),
+
+                // 🛠️ TOMBOL 2: JALAN ARTERI (Edit Manual)
+                Tables\Actions\Action::make('edit_manual')
+                    ->label('Manual')
                     ->icon('heroicon-o-pencil-square')
-                    ->color('success'),
+                    ->color('warning')
+                    ->button()   
+                    ->outlined()
+                    ->url(fn (PermohonanSurat $record): string => PenomoranSuratResource::getUrl('edit', ['record' => $record])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
