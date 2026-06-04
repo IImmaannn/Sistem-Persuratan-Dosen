@@ -30,11 +30,13 @@ class StatsOverview extends BaseWidget
 
         // 1. Filter status berdasarkan siapa yang login (Sama dengan tabel)
         match ($user->role) {
-            'Supervisor' => $query->where('status_terakhir', 'Terverifikasi'),
-            'Manager'    => $query->where('status_terakhir', 'Disetujui_Supervisor'),
-            'Wakil_Dekan'=> $query->where('status_terakhir', 'Disetujui_Manager'),
-            'Dekan'      => $query->where('status_terakhir', 'Disetujui_Wakil_Dekan'),
-            default      => $query->whereRaw('1 = 0'),
+            'Operator_Surat' => $query->whereIn('status_terakhir', ['Draft', 'Revisi OCS', 'Proses Verifikasi']),
+            'Supervisor'     => $query->where('status_terakhir', 'Terverifikasi'),
+            'Manager'        => $query->where('status_terakhir', 'Disetujui_Supervisor'),
+            'Wakil_Dekan'    => $query->where('status_terakhir', 'Disetujui_Manager'),
+            'Dekan'          => $query->where('status_terakhir', 'Disetujui_Wakil_Dekan'),
+            'Operator_Nomor' => $query->where('status_terakhir', 'Selesai_Pimpinan'),
+            default          => $query->whereRaw('1 = 0'),
         };
 
         // 2. Hitung jumlah per kategori (ID Config sesuai database lo)
