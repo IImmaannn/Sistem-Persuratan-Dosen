@@ -14,7 +14,8 @@ class CreatePermohonanSurat extends CreateRecord
     //customize redirect after create
     public function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        // return $this->getResource()::getUrl('index');
+        return url('/');
     }
 
     protected function getCreatedNotificationTitle(): ?string

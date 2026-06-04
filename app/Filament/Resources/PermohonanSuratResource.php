@@ -30,24 +30,29 @@ class PermohonanSuratResource extends Resource
 
     protected static ?string $navigationLabel = 'Permohonan Surat';
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                
                 // State control tipe surat (Berada di Root Level)
+                // === 1. TANGKAP PARAMETER DARI URL (JALAN TOL) ===
                 Hidden::make('memori_tipe')
-                    ->default(fn() => request()->query('type'))
+                    ->default(fn() => request()->query('jenis')) // 🔥 Ubah 'type' jadi 'jenis'
                     ->live()
-                    ->afterStateHydrated(fn($state, $set) => $set('memori_tipe', request()->query('type') ?? $state)),
+                    ->afterStateHydrated(fn($state, $set) => $set('memori_tipe', request()->query('jenis') ?? $state)),
 
+                // === 2. SET CONFIG_ID OTOMATIS ===
                 Hidden::make('config_id')
-                    ->required()
-                    ->afterStateHydrated(function ($set, $get) {
-                        $tipe = request()->query('type') ?? $get('memori_tipe');
-                        if ($tipe === 'penunjang') $set('config_id', 3);
-                        if ($tipe === 'narasumber') $set('config_id', 2);
-                    }),
+                    ->default(match (request()->query('jenis')) {
+                        'penelitian' => 1, // ID Config Surat Penelitian
+                        'narasumber' => 3, // ID Config Surat Narasumber
+                        'penunjang'  => 2, // ID Config Surat Penunjang
+                        default => null,
+                    })
+                    ->required(),
 
                 // 1. DATA DOSEN PENGAJU (Otomatis)
                 Section::make('Data Dosen Pengaju')
@@ -200,11 +205,11 @@ class PermohonanSuratResource extends Resource
                                     ->required()
                                     ->visible(fn(Get $get) => $get('../memori_tipe') === 'narasumber')
                                     ->columnSpanFull(),
-                                Textarea::make('kolom_5_narasumber')
-                                    ->label('Keterangan Tambahan')
-                                    ->statePath('kolom_5')
-                                    ->visible(fn(Get $get) => $get('../memori_tipe') === 'narasumber')
-                                    ->columnSpanFull(),
+                                // Textarea::make('kolom_5_narasumber')
+                                //     ->label('Keterangan Tambahan')
+                                //     ->statePath('kolom_5')
+                                //     ->visible(fn(Get $get) => $get('../memori_tipe') === 'narasumber')
+                                //     ->columnSpanFull(),
                                     
                             ])->columns(2),
                     ])->columnSpanFull(),

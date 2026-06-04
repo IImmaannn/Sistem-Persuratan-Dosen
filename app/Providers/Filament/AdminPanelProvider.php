@@ -33,6 +33,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Jeffgreco13\FilamentBreezy\BreezyCore;
 use Rupadana\ApiService\ApiServicePlugin;
 use Laravel\Socialite\Contracts\User as SocialiteUserContract;
+use App\Filament\Resources\PermohonanSuratResource;
+use Filament\Navigation\NavigationItem;
+use Filament\Navigation\NavigationGroup;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -52,6 +55,37 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+        ->navigationGroups([
+                // Bikin Header Dropdown-nya
+                NavigationGroup::make()
+                    ->label('Permohonan Surat')
+                    // ->icon('heroicon-o-document-duplicate'),
+            ])
+            ->navigationItems([
+                // 1. Sub-menu Surat Penelitian
+                NavigationItem::make('Surat Penelitian')
+                    ->group('Permohonan Surat') // Masukin ke dalam dropdown
+                    ->icon('heroicon-o-document-text')
+                    // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL HIJAU LO SEBELUMNYA
+                    ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'penelitian'])) 
+                    ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
+
+                // 2. Sub-menu Surat Narasumber
+                NavigationItem::make('Surat Narasumber')
+                    ->group('Permohonan Surat')
+                    ->icon('heroicon-o-user-group')
+                    // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL BIRU LO SEBELUMNYA
+                    ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'narasumber']))
+                    ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
+
+                // 3. Sub-menu Surat Penunjang
+                NavigationItem::make('Surat Penunjang')
+                    ->group('Permohonan Surat')
+                    ->icon('heroicon-o-beaker')
+                    // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL MERAH LO SEBELUMNYA
+                    ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'penunjang']))
+                    ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
+            ])
             ->default()
             ->id('admin')
             ->path('')
@@ -100,6 +134,7 @@ class AdminPanelProvider extends PanelProvider
             // ->plugins([
             //     \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
             // ]);
+            
     }
 
     private function getPlugins(): array
