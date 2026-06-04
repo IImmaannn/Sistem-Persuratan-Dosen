@@ -36,6 +36,8 @@ use Laravel\Socialite\Contracts\User as SocialiteUserContract;
 use App\Filament\Resources\PermohonanSuratResource;
 use Filament\Navigation\NavigationItem;
 use Filament\Navigation\NavigationGroup;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -90,6 +92,13 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->login()
+            ->brandName('SPS DOSEN')
+            ->brandLogo(asset('images/logo-undip.jpg')) // Pastikan path gambar lo bener
+            ->brandLogoHeight('3rem') // Atur tinggi logo biar proporsional
+            
+            ->colors([
+                'primary' => Color::hex('#800000'), // Kode warna Marun
+            ])
             ->brandName('Form')
             // REDIRECTION UTAMA: Admin langsung ke UserResource
             ->homeUrl(fn () => match (auth()->user()?->role) {
@@ -112,8 +121,8 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('web')
             ->databaseNotifications()
             ->widgets([
-                Widgets\AccountWidget::class,
-                ...(auth()->user()?->role !== 'Admin' ? [Widgets\AccountWidget::class] : []),
+                // Widgets\AccountWidget::class,
+                // ...(auth()->user()?->role !== 'Admin' ? [Widgets\AccountWidget::class] : []),
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -130,12 +139,138 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            ->plugins($this->getPlugins());
+            ->plugins($this->getPlugins()) 
             // ->plugins([
             //     \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
-            // ]);
+            // ])
+
+
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('
+                    <style>
+                        /* --- UBAH TOPBAR (HEADER) JADI MARUN --- */
+                        .fi-topbar > nav {
+                            background-color: #800000 !important; 
+                            border-bottom: none !important;
+                        }
+                        .fi-topbar .fi-icon-btn, 
+                        .fi-topbar button, 
+                        .fi-topbar a {
+                            color: #ffffff !important;
+                        }
+
+                        .fi-sidebar-header {
+                            background-color: #800000 !important;
+                            border-bottom: none !important;
+                            border-right: none !important;
+                        }
+
+                        /* --- UBAH SIDEBAR JADI ABU-ABU GELAP --- */
+                        aside.fi-sidebar, 
+                        aside.fi-sidebar > nav {
+                            background-color: #003049 !important;
+                        }
+                        .fi-logo {
+                            color: #ffffff !important;
+                        }
+                        .fi-sidebar-group-label,
+                        .fi-sidebar-item-label {
+                            color: #ffffff !important;
+                        }
+                        .fi-sidebar-item-icon {
+                            color: #d1d5db !important; 
+                        }
+
+                        /* --- UBAH MENU SIDEBAR SAAT AKTIF (KOTAK PUTIH KAKU) --- */
+                        .fi-sidebar-item-active > a,
+                        .fi-sidebar-item-active > button {
+                            background-color: #ffffff !important;
+                            border-radius: 8px !important; 
+                        }
+                        .fi-sidebar-item-active .fi-sidebar-item-label,
+                        .fi-sidebar-item-active .fi-sidebar-item-icon {
+                            color: #000000 !important;
+                        }
+                        .fi-sidebar-item-button:hover {
+                            background-color: rgba(255, 255, 255, 0.2) !important;
+                        }
+                        /* Paksa menu dropdown (anaknya) terbuka jadi tipe flex (bawaan Filament) saat induknya di-hover kursor */
+                        .fi-sidebar-group:hover .fi-sidebar-group-items {
+                            display: flex !important;
+                            visibility: visible !important;
+                            opacity: 1 !important;
+                            height: auto !important;
+                            overflow: visible !important;
+                        }
+                        
+                        /* (Opsional) Putar ikon panah Chevron ke atas saat di-hover biar keliatan realistis */
+                        .fi-sidebar-group:hover button svg, 
+                        .fi-sidebar-group:hover div[role="button"] svg {
+                            /* Filament biasanya naruh efek transisi di panahnya, kita paksa putar 180 derajat */
+                            transform: rotate(180deg) !important; 
+                        }
+                        .fi-simple-layout {
+                            background-color: #800000 !important;
+                        }
+                        
+                        /* 2. Hilangkan teks "Sign in to your account" biar polos */
+                        .fi-simple-layout .fi-simple-header-heading {
+                            display: none !important;
+                        }
+                        
+                        /* 3. Bikin kotak Card lebih clean dengan shadow elegan */
+                        .fi-simple-layout .fi-card {
+                            border: none !important;
+                            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+                            padding-top: 1rem !important; /* Jarak logo ke atas */
+                        }
+                        
+                        /* 4. Ubah kotak input (Email & Password) jadi abu-abu solid */
+                        .fi-simple-layout .fi-input-wrapper {
+                            background-color: #e5e7eb !important; /* Warna abu-abu */
+                            border: none !important;
+                            box-shadow: none !important;
+                            border-radius: 4px !important;
+                        }
+                        .fi-simple-layout .fi-input-wrapper input {
+                            background-color: transparent !important;
+                        }
+                        
+                        /* 5. Paksa tombol Login jadi Biru Terang (Ngalahin warna Marun) */
+                        .fi-simple-layout button[type="submit"]: hover {
+                            background-color: #003049 !important;
+                            border-radius: 8px !important;
+                            color: white !important;
+                            box-shadow: 0 4px 10px rgba(0, 48, 73, 0.3) !important;
+                        }
+
+                        /* 🔥 6. PERBESAR LOGO & ANTI GEPENG (UDAH DIPERBAIKI 100%) 🔥 */
+                        .fi-simple-layout img.fi-logo {
+                            height: 7rem !important; 
+                            max-height: none !important; 
+                            width: auto !important; 
+                            display: block !important; 
+                            margin: 0 auto 1.5rem auto !important; 
+                            object-fit: contain !important; 
+                        }
+                        
+                    </style>
+                ')
+            )
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn (): string => Blade::render('
+                    <div style="flex: 1; display: flex; justify-content: center; align-items: center; color: white; font-size: 1.5rem; font-weight: bold; letter-spacing: 1px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 2.5rem; height: 2.5rem; margin-right: 12px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
+                        </svg>
+                        SPS DOSEN
+                    </div>
+                ')
+            ); 
             
-    }
+    } 
 
     private function getPlugins(): array
     {
@@ -154,20 +289,6 @@ class AdminPanelProvider extends PanelProvider
                 ->avatarUploadComponent(fn() => FileUpload::make('avatar_url')->image()->disk('public'))
                 ->enableTwoFactorAuthentication(),
         ];
-
-        if ($this->settings->sso_enabled ?? true) {
-            $plugins[] = FilamentSocialitePlugin::make()
-                ->providers([
-                    Provider::make('google')->label('Google')->icon('fab-google')->color(Color::hex('#2f2a6b'))->outlined(true)
-                ])
-                ->registration(true)
-                ->createUserUsing(function ($provider, $oauthUser) {
-                    return User::updateOrCreate(
-                        ['email' => $oauthUser->getEmail()],
-                        ['name' => $oauthUser->getName(), 'email_verified_at' => now()]
-                    );
-                });
-        }
         return $plugins;
     }
 }
