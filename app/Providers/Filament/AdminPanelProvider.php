@@ -59,13 +59,13 @@ class AdminPanelProvider extends PanelProvider
                 // Bikin Header Dropdown-nya
                 NavigationGroup::make()
                     ->label('Permohonan Surat')
-                    // ->icon('heroicon-o-document-duplicate'),
+                    ->icon('heroicon-o-document-duplicate'),
             ])
             ->navigationItems([
                 // 1. Sub-menu Surat Penelitian
                 NavigationItem::make('Surat Penelitian')
                     ->group('Permohonan Surat') // Masukin ke dalam dropdown
-                    ->icon('heroicon-o-document-text')
+                    // ->icon('heroicon-o-document-text')
                     // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL HIJAU LO SEBELUMNYA
                     ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'penelitian'])) 
                     ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
@@ -73,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
                 // 2. Sub-menu Surat Narasumber
                 NavigationItem::make('Surat Narasumber')
                     ->group('Permohonan Surat')
-                    ->icon('heroicon-o-user-group')
+                    // ->icon('heroicon-o-user-group')
                     // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL BIRU LO SEBELUMNYA
                     ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'narasumber']))
                     ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
@@ -81,7 +81,7 @@ class AdminPanelProvider extends PanelProvider
                 // 3. Sub-menu Surat Penunjang
                 NavigationItem::make('Surat Penunjang')
                     ->group('Permohonan Surat')
-                    ->icon('heroicon-o-beaker')
+                    // ->icon('heroicon-o-beaker')
                     // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL MERAH LO SEBELUMNYA
                     ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'penunjang']))
                     ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
