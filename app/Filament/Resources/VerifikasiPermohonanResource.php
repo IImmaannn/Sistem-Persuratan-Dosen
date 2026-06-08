@@ -111,8 +111,8 @@ class VerifikasiPermohonanResource extends Resource
                                 TextInput::make('kolom_2')
                                     ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4, 5=> 'e-ISSN',
-                                        3 => 'Penyelenggara',    // 🔥 TUKER JADI 3 (Narasumber)
-                                        2 => 'Tanggal Kegiatan', // 🔥 TUKER JADI 2 (Penunjang)
+                                        3 => 'Penyelenggara',    
+                                        2 => 'Tanggal Kegiatan', 
                                         default => 'Detail 2',
                                     })
                                     ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [1, 2, 3, 4, 5]))
@@ -122,7 +122,7 @@ class VerifikasiPermohonanResource extends Resource
                                 TextInput::make('kolom_3')
                                     ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4, 5 => 'Judul Penelitian',
-                                        3 => 'Tempat Kegiatan', // 🔥 TUKER JADI 3
+                                        3 => 'Tempat Kegiatan', 
                                         default => 'Detail 3',
                                     })
                                     ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [1, 3, 4, 5])) // 🔥 2 GANTI 3
@@ -131,7 +131,7 @@ class VerifikasiPermohonanResource extends Resource
                                 TextInput::make('kolom_4')
                                     ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4, 5 => 'Link Jurnal',
-                                        3 => 'Tanggal Kegiatan', // 🔥 TUKER JADI 3
+                                        3 => 'Tanggal Kegiatan', 
                                         default => 'Detail 4',
                                     })
                                     ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [1, 3, 4, 5])) // 🔥 2 GANTI 3
@@ -139,7 +139,7 @@ class VerifikasiPermohonanResource extends Resource
 
                                 Textarea::make('kolom_5')
                                     ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
-                                        3 => 'Nama Kegiatan / Keterangan', // 🔥 TUKER JADI 3
+                                        3 => 'Nama Kegiatan / Keterangan', 
                                         default => 'Keterangan Tambahan',
                                     })
                                     ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [3])) // 🔥 2 GANTI 3
