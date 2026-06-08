@@ -54,7 +54,6 @@ class UserResource extends Resource
                             'Laki-laki' => 'Laki-laki',
                             'Perempuan' => 'Perempuan',
                         ])
-                        // 🔥 BARIS RELATIONSHIP UDAH GUE HAPUS DI SINI!
                         ->required(),
 
                     // INI FITUR BARU BUAT GANTI ROLE/JABATAN USER
@@ -76,8 +75,6 @@ class UserResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
-
-                // 🔥 GANTI JADI 'gender' DOANG, BUKAN 'profile.gender'
                 Tables\Columns\TextColumn::make('gender') 
                     ->label('Gender')
                     ->badge()

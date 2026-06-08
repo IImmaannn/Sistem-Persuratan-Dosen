@@ -205,11 +205,11 @@ class PermohonanSuratResource extends Resource
                                     ->required()
                                     ->visible(fn(Get $get) => $get('../memori_tipe') === 'narasumber')
                                     ->columnSpanFull(),
-                                // Textarea::make('kolom_5_narasumber')
-                                //     ->label('Keterangan Tambahan')
-                                //     ->statePath('kolom_5')
-                                //     ->visible(fn(Get $get) => $get('../memori_tipe') === 'narasumber')
-                                //     ->columnSpanFull(),
+                                Textarea::make('kolom_5_narasumber')
+                                    ->label('Keterangan Tambahan')
+                                    ->statePath('kolom_5')
+                                    ->visible(fn(Get $get) => $get('../memori_tipe') === 'narasumber')
+                                    ->columnSpanFull(),
                                     
                             ])->columns(2),
                     ])->columnSpanFull(),

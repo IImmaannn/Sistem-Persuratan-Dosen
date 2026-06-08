@@ -68,7 +68,6 @@ class AdminPanelProvider extends PanelProvider
                 NavigationItem::make('Surat Penelitian')
                     ->group('Permohonan Surat') // Masukin ke dalam dropdown
                     // ->icon('heroicon-o-document-text')
-                    // 🔥 GANTI URL DI BAWAH INI SESUAI TUJUAN TOMBOL HIJAU LO SEBELUMNYA
                     ->url(fn (): string => PermohonanSuratResource::getUrl('create', ['jenis' => 'penelitian'])) 
                     ->visible(fn (): bool => auth()->user()?->role === 'Dosen'),
 

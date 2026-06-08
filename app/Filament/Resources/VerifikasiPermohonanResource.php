@@ -95,55 +95,54 @@ class VerifikasiPermohonanResource extends Resource
                                     ->addActionLabel('Tambah Dosen Lain')
                                     ->minItems(0),
                             ]),
-
                         // VERIFIKASI DETAIL ESAI (Bisa Diedit OCS)
                         Section::make('Verifikasi Detail Esai')
                             ->description('Label dan kolom muncul otomatis sesuai jenis surat') 
                             ->schema([
                                 TextInput::make('kolom_1')
-                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                    ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4 ,5 => 'Nama Jurnal',
-                                        2, 3 => 'Nama Kegiatan',
+                                        3, 2 => 'Nama Kegiatan', 
                                         default => 'Detail 1',
                                     }) 
                                     ->required()
                                     ->columnSpanFull(),
 
                                 TextInput::make('kolom_2')
-                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                    ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4, 5=> 'e-ISSN',
-                                        2 => 'Penyelenggara',
-                                        3 => 'Tanggal Kegiatan',
+                                        3 => 'Penyelenggara',    // 🔥 TUKER JADI 3 (Narasumber)
+                                        2 => 'Tanggal Kegiatan', // 🔥 TUKER JADI 2 (Penunjang)
                                         default => 'Detail 2',
                                     })
-                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [1, 2, 3, 4, 5]))
+                                    ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [1, 2, 3, 4, 5]))
                                     ->required()
                                     ->columnSpanFull(),
 
                                 TextInput::make('kolom_3')
-                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                    ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4, 5 => 'Judul Penelitian',
-                                        2 => 'Tempat Kegiatan',
+                                        3 => 'Tempat Kegiatan', // 🔥 TUKER JADI 3
                                         default => 'Detail 3',
                                     })
-                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [1, 2, 4, 5]))
+                                    ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [1, 3, 4, 5])) // 🔥 2 GANTI 3
                                     ->columnSpanFull(),
 
                                 TextInput::make('kolom_4')
-                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
+                                    ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
                                         1, 4, 5 => 'Link Jurnal',
-                                        2 => 'Tanggal Kegiatan',
+                                        3 => 'Tanggal Kegiatan', // 🔥 TUKER JADI 3
                                         default => 'Detail 4',
                                     })
-                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [1, 2, 4, 5]))
+                                    ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [1, 3, 4, 5])) // 🔥 2 GANTI 3
                                     ->columnSpanFull(),
 
                                 Textarea::make('kolom_5')
-                                    ->label(fn ($livewire) => match ($livewire->record?->config_id) {
-                                        2 => 'Nama Kegiatan / Keterangan',
+                                    ->label(fn ($livewire) => match ((int) $livewire->record?->config_id) { 
+                                        3 => 'Nama Kegiatan / Keterangan', // 🔥 TUKER JADI 3
                                         default => 'Keterangan Tambahan',
                                     })
-                                    ->visible(fn ($livewire) => in_array($livewire->record?->config_id, [2]))
+                                    ->visible(fn ($livewire) => in_array((int) $livewire->record?->config_id, [3])) // 🔥 2 GANTI 3
                                     ->columnSpanFull()
                             ])->columns(2),
                     ])->columnSpanFull(),

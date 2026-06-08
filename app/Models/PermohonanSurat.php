@@ -44,7 +44,8 @@ class PermohonanSurat extends Model
     public function latestLog() {
         return $this->hasOne(LogPersetujuan::class, 'permohonan_id')->latestOfMany();
     }
-
-
+    protected $casts = [
+        'config_id' => 'integer',
+    ];
 
 }
