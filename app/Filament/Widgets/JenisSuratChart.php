@@ -27,9 +27,7 @@ class JenisSuratChart extends ChartWidget
         $labels = [];
         $totals = [];
 
-        // 2. Ekstrak data buat dimasukin ke grafik
         foreach ($dataSurat as $item) {
-            // 🔥 Panggil kolom 'value' sesuai dengan struktur tabel configs lo
             $namaJenis = $item->config ? $item->config->value : 'Tidak Diketahui'; 
             
             $labels[] = $namaJenis;

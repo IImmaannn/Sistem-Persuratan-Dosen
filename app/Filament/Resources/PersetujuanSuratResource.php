@@ -164,36 +164,51 @@ class PersetujuanSuratResource extends Resource
                     ->modalHeading('Detail Permohonan Surat')
                     ->modalWidth('4xl') 
                     ->extraModalFooterActions([
+                        
+                        // 1. TOMBOL SETUJUI (DI DALAM POP-UP)
                         Tables\Actions\Action::make('setuju_modal')
                             ->label('Setujui')
                             ->color('success')
                             ->icon('heroicon-o-check-circle')
                             ->requiresConfirmation()
                             ->action(function (PermohonanSurat $record) {
-                                $user = auth()->user();
-                                
-                                $nextStatus = match ($user->role) {
-                                    'Supervisor' => 'Disetujui_Supervisor',
-                                    'Manager' => 'Disetujui_Manager',
-                                    'Wakil_Dekan' => 'Disetujui_Wakil_Dekan',
-                                    'Dekan' => 'Selesai_Pimpinan',
-                                    default => $record->status_terakhir,
-                                };
-            
-                                \App\Models\LogPersetujuan::create([
-                                    'permohonan_id' => $record->id,
-                                    'pimpinan_id'   => $user->id,
-                                    'status_aksi'   => $nextStatus, 
-                                    'catatan'       => 'Disetujui oleh ' . $user->role . ' untuk lanjut ke tahap berikutnya.',
-                                ]);
-            
-                                $record->update(['status_terakhir' => $nextStatus]);
-            
-                                Notification::make()
-                                    ->title('Surat berhasil disetujui')
-                                    ->success()
-                                    ->send();
+                                try {
+                                    $user = auth()->user();
+                                    
+                                    $nextStatus = match ($user->role) {
+                                        'Supervisor' => 'Disetujui_Supervisor',
+                                        'Manager' => 'Disetujui_Manager',
+                                        'Wakil_Dekan' => 'Disetujui_Wakil_Dekan',
+                                        'Dekan' => 'Selesai_Pimpinan',
+                                        default => $record->status_terakhir,
+                                    };
+                
+                                    \App\Models\LogPersetujuan::create([
+                                        'permohonan_id' => $record->id,
+                                        'pimpinan_id'   => $user->id,
+                                        'status_aksi'   => $nextStatus, 
+                                        'catatan'       => 'Disetujui oleh ' . $user->role . ' untuk lanjut ke tahap berikutnya.',
+                                    ]);
+                
+                                    $record->update(['status_terakhir' => $nextStatus]);
+                
+                                    Notification::make()
+                                        ->title('Surat berhasil disetujui')
+                                        ->success()
+                                        ->send();
+
+                                    return redirect(request()->header('Referer'));
+
+                                } catch (\Exception $e) {
+                                    Notification::make()
+                                        ->title('Gagal Menyimpan! (Error Database)')
+                                        ->body($e->getMessage()) 
+                                        ->danger()
+                                        ->send();
+                                }
                             }),
+
+                        // 2. TOMBOL TOLAK (DI DALAM POP-UP)
                         Tables\Actions\Action::make('tolak_modal')
                             ->label('Tolak')
                             ->color('danger')
@@ -205,20 +220,30 @@ class PersetujuanSuratResource extends Resource
                                     ->required(),
                             ])
                             ->action(function (PermohonanSurat $record, array $data) {
-                                $record->update(['status_terakhir' => 'Revisi OCS']);
-                                
-                                \App\Models\LogPersetujuan::create([
-                                    'permohonan_id' => $record->id,
-                                    'pimpinan_id' => auth()->id(),
-                                    'status_aksi' => 'Revisi',
-                                    'catatan' => $data['catatan'],
-                                    'timestamp' => now(),
-                                ]);
-                                
-                                Notification::make()
-                                    ->title('Surat berhasil dikembalikan ke OCS')
-                                    ->danger()
-                                    ->send();
+                                try {
+                                    $record->update(['status_terakhir' => 'Revisi OCS']);
+                                    
+                                    \App\Models\LogPersetujuan::create([
+                                        'permohonan_id' => $record->id,
+                                        'pimpinan_id'   => auth()->id(), 
+                                        'status_aksi'   => 'Revisi',
+                                        'catatan'       => $data['catatan'],
+                                    ]);
+                                    
+                                    Notification::make()
+                                        ->title('Surat dikembalikan ke OCS')
+                                        ->danger()
+                                        ->send();
+
+                                    return redirect(request()->header('Referer'));
+
+                                } catch (\Exception $e) {
+                                    Notification::make()
+                                        ->title('Gagal Menyimpan! (Error Database)')
+                                        ->body($e->getMessage())
+                                        ->danger()
+                                        ->send();
+                                }
                             }),
                     ]),
             ])
