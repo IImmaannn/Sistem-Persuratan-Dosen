@@ -207,6 +207,6 @@ class VerifikasiPermohonanResource extends Resource
     {
         return parent::getEloquentQuery()
             ->with(['keteranganEssai', 'config'])
-            ->whereIn('status_terakhir', ['Draft', 'Proses Verifikasi', 'Revisi OCS']); 
+            ->whereIn('status_terakhir', ['Draft']); 
     }
 }

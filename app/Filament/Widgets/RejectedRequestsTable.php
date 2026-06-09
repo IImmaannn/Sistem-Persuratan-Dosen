@@ -10,7 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class RejectedRequestsTable extends BaseWidget
 {
-    protected static ?string $heading = 'Surat yang Perlu Direvisi (Ditolak Pimpinan)';
+    protected static ?string $heading = 'Surat yang Perlu Direvisi';
     
     // Biar tabel ini memanjang penuh
     protected int | string | array $columnSpan = 'full';

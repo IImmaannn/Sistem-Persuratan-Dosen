@@ -28,9 +28,11 @@ class StatsOverview extends BaseWidget
         $user = auth()->user();
         $query = PermohonanSurat::query();
 
-        // 1. Filter status berdasarkan siapa yang login (Sama dengan tabel)
+        // 1. Filter status berdasarkan siapa yang login
         match ($user->role) {
-            'Operator_Surat' => $query->whereIn('status_terakhir', ['Draft', 'Revisi OCS', 'Proses Verifikasi']),
+            // Saran gue: Hapus 'Draft' biar angkanya akurat murni kerjaan OCS. 
+            // Tapi kalau pembimbing lo minta 'Draft' tetep dihitung, masukin lagi aja bray.
+            'Operator_Surat' => $query->whereIn('status_terakhir', ['Draft','Revisi OCS', 'Proses Verifikasi']),
             'Supervisor'     => $query->where('status_terakhir', 'Terverifikasi'),
             'Manager'        => $query->where('status_terakhir', 'Disetujui_Supervisor'),
             'Wakil_Dekan'    => $query->where('status_terakhir', 'Disetujui_Manager'),
@@ -39,27 +41,25 @@ class StatsOverview extends BaseWidget
             default          => $query->whereRaw('1 = 0'),
         };
 
-        // 2. Hitung jumlah per kategori (ID Config sesuai database lo)
-        // Contoh: 1 = Penelitian, 2 = Penunjang, 3 = Narasumber
         $penelitian = (clone $query)->whereIn('config_id', [1, 4, 5])->count();
-        $narasumber = (clone $query)->where('config_id', 3)->count();
-        $penunjang  = (clone $query)->where('config_id', 2)->count();
+        $narasumber = (clone $query)->where('config_id', 2)->count(); 
+        $penunjang  = (clone $query)->where('config_id', 3)->count(); 
 
         return [
             Stat::make('Surat Penelitian', $penelitian)
-                ->description('Menunggu Persetujuan')
+                ->description('Permohonan Surat')
                 ->descriptionIcon('heroicon-m-document-text')
-                ->color('warning'), // Warna Kuning
+                ->color('warning'), 
 
             Stat::make('Surat Narasumber', $narasumber)
-                ->description('Menunggu Persetujuan')
+                ->description('Permohonan Surat')
                 ->descriptionIcon('heroicon-m-user-group')
-                ->color('danger'), // Warna Pink/Merah
+                ->color('danger'), 
 
             Stat::make('Surat Penunjang', $penunjang)
-                ->description('Menunggu Persetujuan')
+                ->description('Permohonan Surat')
                 ->descriptionIcon('heroicon-m-beaker')
-                ->color('primary'), // Warna Ungu/Biru
+                ->color('primary'), 
         ];
     }
 }
